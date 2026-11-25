@@ -18,8 +18,13 @@ import 'account_widgets.dart';
 import 'addresses_screen.dart';
 import 'orders_screen.dart';
 import 'profile_screen.dart';
+import 'configure_url.dart';
 
-void main() => runApp(const VcleanApp());
+void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  configureAppUrl();
+  runApp(const VcleanApp());
+}
 
 typedef DarkToWhiteApp = VcleanApp;
 

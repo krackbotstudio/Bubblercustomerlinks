@@ -56,21 +56,48 @@ String resolveBrandSlug() {
   if (kIsWeb) {
     try {
       final uri = Uri.base;
-      // 1. Query parameter: ?brand=sparkle or ?b=sparkle
+
+      const reservedPaths = {
+        '',
+        'assets',
+        'icons',
+        'canvaskit',
+        'favicon.png',
+        'index.html',
+        'manifest.json',
+        'flutter.js',
+        'flutter_bootstrap.js',
+        'flutter_service_worker.js',
+        'version.json',
+      };
+
+      // 1. Direct path: domain.com/vclean or domain.com/sparkle (domain/brandname)
+      for (final segment in uri.pathSegments) {
+        final clean = segment.trim().toLowerCase();
+        if (clean.isNotEmpty && !reservedPaths.contains(clean)) {
+          return segment.trim();
+        }
+      }
+
+      // 2. Hash / Fragment path: domain.com/#/vclean
+      if (uri.hasFragment) {
+        final frag = uri.fragment.trim();
+        final fragParts = frag.split('/').where((s) => s.isNotEmpty).toList();
+        for (final part in fragParts) {
+          final clean = part.toLowerCase();
+          if (clean != 'brand' && clean != 'b' && !reservedPaths.contains(clean)) {
+            return part.trim();
+          }
+        }
+      }
+
+      // 3. Query parameter fallback: ?brand=sparkle or ?b=sparkle
       final queryBrand = uri.queryParameters['brand'] ?? uri.queryParameters['b'];
       if (queryBrand != null && queryBrand.trim().isNotEmpty) {
         return queryBrand.trim();
       }
 
-      // 2. Path route: /brand/sparkle or /b/sparkle
-      final segments = uri.pathSegments;
-      for (var i = 0; i < segments.length - 1; i++) {
-        if ((segments[i] == 'brand' || segments[i] == 'b') && segments[i + 1].trim().isNotEmpty) {
-          return segments[i + 1].trim();
-        }
-      }
-
-      // 3. Subdomain: sparkle.bubbler.in or sparkle.vercel.app
+      // 4. Subdomain: sparkle.domain.com or sparkle.bubbler.in
       final hostParts = uri.host.split('.');
       if (hostParts.length > 2) {
         final sub = hostParts.first.toLowerCase().trim();
