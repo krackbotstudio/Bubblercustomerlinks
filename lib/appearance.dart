@@ -3,11 +3,22 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 
 /// VClean badge purple, sampled from the brand mark.
-abstract final class BrandColors {
-  static const purple = Color(0xFF5C2786);
-  static const purpleDeep = Color(0xFF3D1468);
-  static const purpleBright = Color(0xFF7A45B0);
-  static const purpleSoft = Color(0xFFE7D4F6);
+Color? parseHexColor(String? hex) {
+  if (hex == null || hex.trim().isEmpty) return null;
+  var str = hex.replaceAll('#', '').trim();
+  if (str.length == 6) str = 'FF$str';
+  if (str.length == 8) {
+    final val = int.tryParse(str, radix: 16);
+    if (val != null) return Color(val);
+  }
+  return null;
+}
+
+abstract class BrandColors {
+  static Color purple = const Color(0xFF5C2786);
+  static Color purpleDeep = const Color(0xFF3D1468);
+  static Color purpleBright = const Color(0xFF7A45B0);
+  static Color purpleSoft = const Color(0xFFE7D4F6);
   static const mist = Color(0xFFF6F1FB);
   static const ink = Color(0xFF1A1024);
   static const sheetLight = Color(0xFFF4F1FA);
@@ -17,6 +28,27 @@ abstract final class BrandColors {
   static const danger = Color(0xFFD64550);
   static const logo = 'assets/vclean-logo.png';
   static const logoOnPurple = 'assets/vclean-badge-purple.png';
+
+  static void setDynamicColors(String? primaryHex, String? secondaryHex) {
+    final prim = parseHexColor(primaryHex);
+    final sec = parseHexColor(secondaryHex);
+    if (prim != null) {
+      purple = prim;
+      final hsl = HSLColor.fromColor(prim);
+      purpleDeep = hsl
+          .withLightness((hsl.lightness * 0.65).clamp(0.0, 1.0))
+          .toColor();
+      purpleBright = hsl
+          .withLightness((hsl.lightness * 1.3).clamp(0.0, 1.0))
+          .toColor();
+    }
+    if (sec != null) {
+      purpleSoft = sec;
+    } else if (prim != null) {
+      final hsl = HSLColor.fromColor(prim);
+      purpleSoft = hsl.withLightness(0.92).withSaturation(0.35).toColor();
+    }
+  }
 }
 
 /// Neumorphic palette: every raised surface shares the page colour and is
@@ -81,10 +113,10 @@ BoxDecoration pageBackdrop(bool dark) => BoxDecoration(
   ),
 );
 
-const brandGradient = LinearGradient(
+LinearGradient get brandGradient => LinearGradient(
   begin: Alignment.topLeft,
   end: Alignment.bottomRight,
-  colors: [Color(0xFF8B5CF6), BrandColors.purple],
+  colors: [BrandColors.purpleBright, BrandColors.purple],
 );
 
 /// Purple gradient surface with the glow used by the sign-in CTA.

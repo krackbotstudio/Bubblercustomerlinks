@@ -191,21 +191,58 @@ class _LoginScreenState extends State<LoginScreen> {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           Center(
-                            child: Container(
-                              padding: EdgeInsets.all(sending ? 18 : 14),
-                              decoration: neuRaised(
-                                false,
-                                radius: 36,
-                                depth: 9,
-                              ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(20),
-                                child: Image.asset(
-                                  BrandColors.logo,
-                                  width: sending ? 112 : 84,
-                                  semanticLabel: 'Vclean Laundry logo',
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  padding: EdgeInsets.all(sending ? 18 : 14),
+                                  decoration: neuRaised(
+                                    false,
+                                    radius: 36,
+                                    depth: 9,
+                                  ),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(20),
+                                    child: () {
+                                      final logo = widget.brand?.logoUrl ??
+                                          AppConfig.brandLogoUrl;
+                                      final size = sending ? 112.0 : 84.0;
+                                      if (logo != null && logo.isNotEmpty) {
+                                        return Image.network(
+                                          logo,
+                                          width: size,
+                                          height: size,
+                                          fit: BoxFit.contain,
+                                          errorBuilder: (_, __, ___) =>
+                                              Image.asset(
+                                            BrandColors.logo,
+                                            width: size,
+                                            height: size,
+                                            fit: BoxFit.contain,
+                                          ),
+                                        );
+                                      }
+                                      return Image.asset(
+                                        BrandColors.logo,
+                                        width: size,
+                                        height: size,
+                                        fit: BoxFit.contain,
+                                      );
+                                    }(),
+                                  ),
                                 ),
-                              ),
+                                const SizedBox(height: 14),
+                                Text(
+                                  widget.brand?.name ?? AppConfig.brandName,
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    color: BrandColors.ink,
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: -.3,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                           const SizedBox(height: 24),
@@ -568,7 +605,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                           ),
                                         ),
                                         onPressed: busy ? null : widget.onSkip,
-                                        icon: const Icon(
+                                        icon: Icon(
                                           Icons.person_outline_rounded,
                                           size: 18,
                                           color: BrandColors.purple,
@@ -580,14 +617,14 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ],
                                 if (sending) ...[
                                   const SizedBox(height: 22),
-                                  const Text.rich(
+                                  Text.rich(
                                     TextSpan(
-                                      style: TextStyle(
+                                      style: const TextStyle(
                                         color: _muted,
                                         fontSize: 13,
                                       ),
                                       children: [
-                                        TextSpan(text: 'New to Vclean? '),
+                                        TextSpan(text: 'New to ${widget.brand?.name ?? AppConfig.brandName}? '),
                                         TextSpan(
                                           text: 'Verify your number to sign up',
                                           style: TextStyle(

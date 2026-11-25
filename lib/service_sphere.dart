@@ -218,7 +218,7 @@ class _Slide {
 }
 
 /// Shown when the backend has no carousel banners for the brand.
-const _fallbackSlides = [
+final _fallbackSlides = [
   _Slide(
     'Doorstep pickup & delivery',
     'Schedule a pickup in a few taps',

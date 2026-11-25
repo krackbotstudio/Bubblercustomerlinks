@@ -304,6 +304,7 @@ class _CustomerShellState extends State<CustomerShell> {
       final result =
           await (widget.loadBrand?.call() ?? BrandApi(client).load());
       if (!mounted) return;
+      BrandColors.setDynamicColors(result.primaryColor, result.secondaryColor);
       setState(() {
         brand = result;
         loading = false;
@@ -562,12 +563,31 @@ class _CustomerShellState extends State<CustomerShell> {
                               ),
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(10),
-                                child: Image.asset(
-                                  BrandColors.logo,
-                                  width: 34,
-                                  height: 34,
-                                  excludeFromSemantics: true,
-                                ),
+                                child: () {
+                                  final logo = brand?.logoUrl ??
+                                      AppConfig.brandLogoUrl;
+                                  if (logo != null && logo.isNotEmpty) {
+                                    return Image.network(
+                                      logo,
+                                      width: 34,
+                                      height: 34,
+                                      fit: BoxFit.contain,
+                                      errorBuilder: (_, __, ___) =>
+                                          Image.asset(
+                                        BrandColors.logo,
+                                        width: 34,
+                                        height: 34,
+                                        fit: BoxFit.contain,
+                                      ),
+                                    );
+                                  }
+                                  return Image.asset(
+                                    BrandColors.logo,
+                                    width: 34,
+                                    height: 34,
+                                    fit: BoxFit.contain,
+                                  );
+                                }(),
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -588,7 +608,7 @@ class _CustomerShellState extends State<CustomerShell> {
                                         ?.copyWith(fontSize: 22),
                                   ),
                                   Text(
-                                    'Laundry, done for you',
+                                    brand?.name ?? AppConfig.brandName,
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                     style: TextStyle(

@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'appearance.dart';
 
 abstract class AppConfig {
   static const apiUrl = String.fromEnvironment(
@@ -213,6 +214,7 @@ class BrandApi {
       primaryColor: primaryColor,
       secondaryColor: secondaryColor,
     );
+    BrandColors.setDynamicColors(primaryColor, secondaryColor);
 
     return BrandInfo.parse(json);
   }

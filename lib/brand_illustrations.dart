@@ -24,7 +24,7 @@ class _BrandArtPainter extends CustomPainter {
   const _BrandArtPainter(this.art);
 
   static const _white = Colors.white;
-  static const _lavender = BrandColors.purpleSoft;
+  static final _lavender = BrandColors.purpleSoft;
   static final _ink = BrandColors.purple.withValues(alpha: .55);
 
   Paint fill(Color color) => Paint()
