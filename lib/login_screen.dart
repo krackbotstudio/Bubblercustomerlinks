@@ -17,6 +17,7 @@ class LoginScreen extends StatefulWidget {
   final DateTime Function()? now;
   final Future<void> Function(CustomerSession) onAuthenticated;
   final VoidCallback? onSkip;
+  final VoidCallback? onChangeBrand;
   const LoginScreen({
     super.key,
     this.brand,
@@ -25,6 +26,7 @@ class LoginScreen extends StatefulWidget {
     this.now,
     required this.onAuthenticated,
     this.onSkip,
+    this.onChangeBrand,
   });
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -242,6 +244,34 @@ class _LoginScreenState extends State<LoginScreen> {
                                     letterSpacing: -.3,
                                   ),
                                 ),
+                                if (widget.onChangeBrand != null) ...[
+                                  const SizedBox(height: 6),
+                                  InkWell(
+                                    onTap: widget.onChangeBrand,
+                                    borderRadius: BorderRadius.circular(12),
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 10, vertical: 4),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: const [
+                                          Icon(Icons.swap_horiz_rounded,
+                                              size: 16,
+                                              color: Color(0xFF8B5CF6)),
+                                          SizedBox(width: 4),
+                                          Text(
+                                            'Change laundry',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w600,
+                                              color: Color(0xFF8B5CF6),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ],
                             ),
                           ),

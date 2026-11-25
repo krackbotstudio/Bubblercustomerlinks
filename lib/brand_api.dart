@@ -53,6 +53,37 @@ abstract class AppConfig {
   }
 }
 
+bool hasExplicitBrandInUrl() {
+  if (!kIsWeb) return true;
+  try {
+    final uri = Uri.base;
+    const reservedPaths = {
+      '',
+      'assets',
+      'icons',
+      'canvaskit',
+      'favicon.png',
+      'index.html',
+      'manifest.json',
+      'flutter.js',
+      'flutter_bootstrap.js',
+      'flutter_service_worker.js',
+      'version.json',
+    };
+    for (final segment in uri.pathSegments) {
+      final clean = segment.trim().toLowerCase();
+      if (clean.isNotEmpty && !reservedPaths.contains(clean)) {
+        return true;
+      }
+    }
+    if (uri.queryParameters.containsKey('brand') ||
+        uri.queryParameters.containsKey('b')) {
+      return true;
+    }
+  } catch (_) {}
+  return false;
+}
+
 String resolveBrandSlug() {
   if (kIsWeb) {
     try {
@@ -109,6 +140,38 @@ String resolveBrandSlug() {
     } catch (_) {}
   }
   return AppConfig.brandSlug;
+}
+
+class PublicBrandSummary {
+  final String id;
+  final String name;
+  final String code;
+  final String? logoUrl;
+  final String? primaryColor;
+  final String? secondaryColor;
+  final String? defaultBranchName;
+
+  const PublicBrandSummary({
+    required this.id,
+    required this.name,
+    required this.code,
+    this.logoUrl,
+    this.primaryColor,
+    this.secondaryColor,
+    this.defaultBranchName,
+  });
+
+  factory PublicBrandSummary.fromJson(Map<String, dynamic> json) {
+    return PublicBrandSummary(
+      id: (json['id'] ?? '') as String,
+      name: (json['name'] ?? json['businessName'] ?? '') as String,
+      code: (json['code'] ?? '') as String,
+      logoUrl: json['logoUrl'] as String?,
+      primaryColor: json['primaryColor'] as String?,
+      secondaryColor: json['secondaryColor'] as String?,
+      defaultBranchName: json['defaultBranchName'] as String?,
+    );
+  }
 }
 
 class Branch {
@@ -213,6 +276,59 @@ class BrandApi {
 
     AppConfig.setBrand(
       slug: slug,
+      code: brandCode,
+      id: brandId,
+      name: businessName,
+      logoUrl: logoUrl,
+      primaryColor: primaryColor,
+      secondaryColor: secondaryColor,
+    );
+    BrandColors.setDynamicColors(primaryColor, secondaryColor);
+
+    return BrandInfo.parse(json);
+  }
+
+  Future<List<PublicBrandSummary>> loadAllBrands() async {
+    final base = AppConfig.apiUrl.replaceFirst(RegExp(r'/+$'), '');
+    try {
+      final response = await client
+          .get(Uri.parse('$base/branding/public'))
+          .timeout(const Duration(seconds: 15));
+      if (response.statusCode != 200) return [];
+      final json = jsonDecode(response.body) as Map<String, dynamic>;
+      final list = json['brands'] as List? ?? [];
+      return list
+          .whereType<Map<String, dynamic>>()
+          .map((m) => PublicBrandSummary.fromJson(m))
+          .where((b) => b.code.isNotEmpty && b.name.isNotEmpty)
+          .toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<BrandInfo> loadForSlug(String customSlug) async {
+    final base = AppConfig.apiUrl.replaceFirst(RegExp(r'/+$'), '');
+    final response = await client
+        .get(
+          Uri.parse(
+            '$base/branding/public/${Uri.encodeComponent(customSlug)}',
+          ),
+        )
+        .timeout(const Duration(seconds: 15));
+    if (response.statusCode != 200) {
+      throw const FormatException('Brand information unavailable');
+    }
+    final json = jsonDecode(response.body) as Map<String, dynamic>;
+    final brandId = (json['brandId'] ?? json['id'] ?? AppConfig.brandId) as String;
+    final brandCode = (json['code'] ?? customSlug) as String;
+    final businessName = (json['businessName'] ?? json['name'] ?? customSlug) as String;
+    final primaryColor = json['primaryColor'] as String?;
+    final secondaryColor = json['secondaryColor'] as String?;
+    final logoUrl = json['logoUrl'] as String?;
+
+    AppConfig.setBrand(
+      slug: customSlug,
       code: brandCode,
       id: brandId,
       name: businessName,

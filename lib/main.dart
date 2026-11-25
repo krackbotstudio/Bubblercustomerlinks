@@ -19,6 +19,7 @@ import 'addresses_screen.dart';
 import 'orders_screen.dart';
 import 'profile_screen.dart';
 import 'configure_url.dart';
+import 'brand_selector_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -57,7 +58,8 @@ class _VcleanAppState extends State<VcleanApp> {
 
   @override
   Widget build(BuildContext context) => MaterialApp(
-    title: AppConfig.brandName,
+    title: 'bubblercustomer',
+    onGenerateTitle: (context) => 'bubblercustomer',
     debugShowCheckedModeBanner: false,
     theme: customerTheme(false),
     darkTheme: customerTheme(true),
@@ -134,10 +136,12 @@ class _CustomerShellState extends State<CustomerShell> {
   bool loadingAddresses = false;
   int activeOrderCount = 0;
   bool loadingOrders = false;
+  late bool showBrandSelector;
 
   @override
   void initState() {
     super.initState();
+    showBrandSelector = !hasExplicitBrandInUrl();
     login = widget.startAtLogin;
     auth = widget.auth ?? AuthApi(CustomerApi(client));
     sessionStore = widget.sessionStore ?? platformSessionStore();
@@ -532,23 +536,52 @@ class _CustomerShellState extends State<CustomerShell> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    body: DecoratedBox(
-      decoration: pageBackdrop(widget.dark),
-      child: SafeArea(
-        bottom: login,
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 480),
-            child: login
-                ? LoginScreen(
-                    auth: auth,
-                    onAuthenticated: authenticated,
-                    brand: brand,
-                    enableVideo: widget.enableVideo,
-                    onSkip: () => navigate(tab),
-                  )
-                : Column(
+  Widget build(BuildContext context) {
+    if (showBrandSelector) {
+      return BrandSelectorScreen(
+        loadBrands: () => BrandApi(client).loadAllBrands(),
+        onSelectBrand: (selected) async {
+          updateBrowserUrl(selected.code);
+          setState(() {
+            showBrandSelector = false;
+            loading = true;
+          });
+          final b = await BrandApi(client).loadForSlug(selected.code);
+          if (mounted) {
+            setState(() {
+              brand = b;
+              loading = false;
+            });
+            try {
+              final result = await BrandApi(client).loadBanners();
+              if (mounted) setState(() => banners = result);
+            } catch (_) {}
+          }
+        },
+      );
+    }
+
+    return Scaffold(
+      body: DecoratedBox(
+        decoration: pageBackdrop(widget.dark),
+        child: SafeArea(
+          bottom: login,
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 480),
+              child: login
+                  ? LoginScreen(
+                      auth: auth,
+                      onAuthenticated: authenticated,
+                      brand: brand,
+                      enableVideo: widget.enableVideo,
+                      onSkip: () => navigate(tab),
+                      onChangeBrand: () {
+                        updateBrowserUrl('/');
+                        setState(() => showBrandSelector = true);
+                      },
+                    )
+                  : Column(
                     children: [
                       Padding(
                         padding: const EdgeInsets.fromLTRB(20, 16, 18, 12),
@@ -660,6 +693,7 @@ class _CustomerShellState extends State<CustomerShell> {
       ),
     ),
   );
+}
 
   Widget navigation() {
     final fg = Theme.of(context).colorScheme.onSurface;
