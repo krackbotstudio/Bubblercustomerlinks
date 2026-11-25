@@ -162,13 +162,19 @@ class BrandApi {
 
   Future<List<String>> loadBanners() async {
     final base = AppConfig.apiUrl.replaceFirst(RegExp(r'/+$'), '');
+    final headers = <String, String>{
+      if (kIsWeb)
+        'x-portal-slug': AppConfig.brandCode
+      else ...{
+        'X-Brand-Code': AppConfig.brandCode,
+        'X-Brand-Id': AppConfig.brandId,
+        'x-portal-slug': AppConfig.brandCode,
+      },
+    };
     final response = await client
         .get(
           Uri.parse('$base/carousel/public'),
-          headers: {
-            'X-Brand-Code': AppConfig.brandCode,
-            'X-Brand-Id': AppConfig.brandId,
-          },
+          headers: headers,
         )
         .timeout(const Duration(seconds: 15));
     if (response.statusCode != 200) {

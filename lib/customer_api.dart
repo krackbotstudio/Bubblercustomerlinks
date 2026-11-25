@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 import 'brand_api.dart';
@@ -29,8 +30,13 @@ class CustomerApi {
     final base = baseUrl.replaceFirst(RegExp(r'/+$'), '');
     final uri = Uri.parse('$base$path').replace(queryParameters: query);
     final headers = <String, String>{
-      'X-Brand-Code': AppConfig.brandCode,
-      'X-Brand-Id': AppConfig.brandId,
+      if (kIsWeb)
+        'x-portal-slug': AppConfig.brandCode
+      else ...{
+        'X-Brand-Code': AppConfig.brandCode,
+        'X-Brand-Id': AppConfig.brandId,
+        'x-portal-slug': AppConfig.brandCode,
+      },
       if (token != null) 'Authorization': 'Bearer $token',
       if (body != null) 'Content-Type': 'application/json',
     };
