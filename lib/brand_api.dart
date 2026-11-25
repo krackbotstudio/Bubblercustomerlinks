@@ -1,21 +1,22 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
-abstract final class AppConfig {
+abstract class AppConfig {
   static const apiUrl = String.fromEnvironment(
     'API_BASE_URL',
     defaultValue: 'https://apibubbler.krackbot.com/api',
   );
-  static const brandSlug = String.fromEnvironment(
+  static const defaultBrandSlug = String.fromEnvironment(
     'BRAND_SLUG',
     defaultValue: 'Vclean',
   );
-  static const brandCode = String.fromEnvironment(
+  static const defaultBrandCode = String.fromEnvironment(
     'BRAND_CODE',
     defaultValue: 'Vclean',
   );
-  static const brandId = String.fromEnvironment(
+  static const defaultBrandId = String.fromEnvironment(
     'BRAND_ID',
     defaultValue: '87211d7b-1b57-417f-9762-4a5c4d42945a',
   );
@@ -23,6 +24,63 @@ abstract final class AppConfig {
     'ASSET_BASE_URL',
     defaultValue: 'https://apibubbler.krackbot.com',
   );
+
+  static String brandSlug = defaultBrandSlug;
+  static String brandCode = defaultBrandCode;
+  static String brandId = defaultBrandId;
+  static String brandName = 'Vclean laundry';
+  static String? brandLogoUrl;
+  static String? brandPrimaryColor;
+  static String? brandSecondaryColor;
+
+  static void setBrand({
+    required String slug,
+    required String code,
+    required String id,
+    String? name,
+    String? logoUrl,
+    String? primaryColor,
+    String? secondaryColor,
+  }) {
+    brandSlug = slug;
+    brandCode = code;
+    brandId = id;
+    if (name != null && name.isNotEmpty) brandName = name;
+    brandLogoUrl = logoUrl;
+    brandPrimaryColor = primaryColor;
+    brandSecondaryColor = secondaryColor;
+  }
+}
+
+String resolveBrandSlug() {
+  if (kIsWeb) {
+    try {
+      final uri = Uri.base;
+      // 1. Query parameter: ?brand=sparkle or ?b=sparkle
+      final queryBrand = uri.queryParameters['brand'] ?? uri.queryParameters['b'];
+      if (queryBrand != null && queryBrand.trim().isNotEmpty) {
+        return queryBrand.trim();
+      }
+
+      // 2. Path route: /brand/sparkle or /b/sparkle
+      final segments = uri.pathSegments;
+      for (var i = 0; i < segments.length - 1; i++) {
+        if ((segments[i] == 'brand' || segments[i] == 'b') && segments[i + 1].trim().isNotEmpty) {
+          return segments[i + 1].trim();
+        }
+      }
+
+      // 3. Subdomain: sparkle.bubbler.in or sparkle.vercel.app
+      final hostParts = uri.host.split('.');
+      if (hostParts.length > 2) {
+        final sub = hostParts.first.toLowerCase().trim();
+        if (sub != 'www' && sub != 'app' && sub != 'localhost' && sub != '127') {
+          return sub;
+        }
+      }
+    } catch (_) {}
+  }
+  return AppConfig.brandSlug;
 }
 
 class Branch {
@@ -33,30 +91,39 @@ class Branch {
 class BrandInfo {
   final String name, privacy, terms;
   final List<Branch> branches;
+  final String? logoUrl;
+  final String? primaryColor;
+  final String? secondaryColor;
+
   const BrandInfo({
     required this.name,
     required this.privacy,
     required this.terms,
     required this.branches,
+    this.logoUrl,
+    this.primaryColor,
+    this.secondaryColor,
   });
+
   factory BrandInfo.parse(Map<String, dynamic> json) {
-    if (json['brandId'] != AppConfig.brandId) {
-      throw const FormatException('Unexpected brand');
-    }
+    final targetBrandId = (json['brandId'] ?? json['id'] ?? AppConfig.brandId) as String;
     final branches = <Branch>[];
     for (final item in (json['branches'] as List? ?? [])) {
       if (item is Map &&
-          item['brandId'] == AppConfig.brandId &&
           item['id'] is String &&
-          item['name'] is String) {
+          item['name'] is String &&
+          (item['brandId'] == null || item['brandId'] == targetBrandId)) {
         branches.add(Branch(item['id'] as String, item['name'] as String));
       }
     }
     return BrandInfo(
-      name: json['businessName'] as String? ?? 'Vclean laundry',
+      name: json['businessName'] as String? ?? json['name'] as String? ?? 'Vclean laundry',
       privacy: json['privacyPolicy'] as String? ?? '',
       terms: json['termsAndConditions'] as String? ?? '',
       branches: branches,
+      logoUrl: json['logoUrl'] as String?,
+      primaryColor: json['primaryColor'] as String?,
+      secondaryColor: json['secondaryColor'] as String?,
     );
   }
 }
@@ -64,6 +131,7 @@ class BrandInfo {
 class BrandApi {
   final http.Client client;
   BrandApi(this.client);
+
   Future<List<String>> loadBanners() async {
     final base = AppConfig.apiUrl.replaceFirst(RegExp(r'/+$'), '');
     final response = await client
@@ -89,17 +157,36 @@ class BrandApi {
   }
 
   Future<BrandInfo> load() async {
+    final slug = resolveBrandSlug();
     final base = AppConfig.apiUrl.replaceFirst(RegExp(r'/+$'), '');
     final response = await client
         .get(
           Uri.parse(
-            '$base/branding/public/${Uri.encodeComponent(AppConfig.brandSlug)}',
+            '$base/branding/public/${Uri.encodeComponent(slug)}',
           ),
         )
         .timeout(const Duration(seconds: 15));
     if (response.statusCode != 200) {
       throw const FormatException('Brand information unavailable');
     }
-    return BrandInfo.parse(jsonDecode(response.body) as Map<String, dynamic>);
+    final json = jsonDecode(response.body) as Map<String, dynamic>;
+    final brandId = (json['brandId'] ?? json['id'] ?? AppConfig.brandId) as String;
+    final brandCode = (json['code'] ?? slug) as String;
+    final businessName = (json['businessName'] ?? json['name'] ?? slug) as String;
+    final primaryColor = json['primaryColor'] as String?;
+    final secondaryColor = json['secondaryColor'] as String?;
+    final logoUrl = json['logoUrl'] as String?;
+
+    AppConfig.setBrand(
+      slug: slug,
+      code: brandCode,
+      id: brandId,
+      name: businessName,
+      logoUrl: logoUrl,
+      primaryColor: primaryColor,
+      secondaryColor: secondaryColor,
+    );
+
+    return BrandInfo.parse(json);
   }
 }

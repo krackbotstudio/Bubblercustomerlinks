@@ -52,7 +52,7 @@ class _VcleanAppState extends State<VcleanApp> {
 
   @override
   Widget build(BuildContext context) => MaterialApp(
-    title: 'Vclean Laundry',
+    title: AppConfig.brandName,
     debugShowCheckedModeBanner: false,
     theme: customerTheme(false),
     darkTheme: customerTheme(true),
