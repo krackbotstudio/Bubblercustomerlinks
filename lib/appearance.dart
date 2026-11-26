@@ -841,3 +841,75 @@ void showDocument(BuildContext context, String title, String body) {
     ),
   );
 }
+
+/// Store mark from the admin branding payload. A missing or broken logo
+/// shows the store's own initials.
+class BrandMark extends StatelessWidget {
+  final String? url;
+  final String name;
+  final double size;
+  const BrandMark({
+    super.key,
+    required this.url,
+    required this.name,
+    this.size = 84,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final mark = url?.trim() ?? '';
+    final initials = _BrandInitials(name: name, size: size);
+    if (mark.isEmpty) return initials;
+    return Image.network(
+      mark,
+      width: size,
+      height: size,
+      fit: BoxFit.contain,
+      semanticLabel: name,
+      errorBuilder: (_, _, _) => initials,
+    );
+  }
+}
+
+class _BrandInitials extends StatelessWidget {
+  final String name;
+  final double size;
+  const _BrandInitials({required this.name, required this.size});
+
+  String get letters {
+    final parts = name
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((part) => part.isNotEmpty)
+        .take(2)
+        .toList();
+    if (parts.isEmpty) return '?';
+    if (parts.length == 1) {
+      final word = parts.first;
+      return (word.length >= 2 ? word.substring(0, 2) : word).toUpperCase();
+    }
+    return parts.map((part) => part[0]).join().toUpperCase();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ColoredBox(
+      color: Bubbler.cream,
+      child: SizedBox(
+        width: size,
+        height: size,
+        child: Center(
+          child: Text(
+            letters,
+            style: TextStyle(
+              fontFamily: Bubbler.display,
+              fontSize: size * 0.32,
+              fontWeight: FontWeight.w800,
+              color: Bubbler.ink,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

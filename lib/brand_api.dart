@@ -166,7 +166,9 @@ class PublicBrandSummary {
       id: (json['id'] ?? '') as String,
       name: (json['name'] ?? json['businessName'] ?? '') as String,
       code: (json['code'] ?? '') as String,
-      logoUrl: json['logoUrl'] as String?,
+      logoUrl:
+          resolveMediaUrl(json['logoUrl'] as String?) ??
+          resolveMediaUrl(json['appIconUrl'] as String?),
       primaryColor: json['primaryColor'] as String?,
       secondaryColor: json['secondaryColor'] as String?,
       defaultBranchName: json['defaultBranchName'] as String?,
@@ -176,13 +178,30 @@ class PublicBrandSummary {
 
 class Branch {
   final String id, name;
-  const Branch(this.id, this.name);
+  final String? logoUrl;
+  const Branch(this.id, this.name, {this.logoUrl});
+}
+
+/// Turn an admin media path into an absolute https URL.
+String? resolveMediaUrl(String? raw) {
+  final value = raw?.trim() ?? '';
+  if (value.isEmpty) return null;
+  final parsed = Uri.tryParse(value);
+  if (parsed == null) return null;
+  if (parsed.hasScheme) {
+    return parsed.scheme == 'https' ? parsed.toString() : null;
+  }
+  if (!value.startsWith('/')) return null;
+  final resolved = Uri.parse(AppConfig.assetOrigin).resolve(value);
+  if (resolved.scheme != 'https' || resolved.host.isEmpty) return null;
+  return resolved.toString();
 }
 
 class BrandInfo {
   final String name, privacy, terms;
   final List<Branch> branches;
   final String? logoUrl;
+  final String? appIconUrl;
   final String? primaryColor;
   final String? secondaryColor;
 
@@ -192,9 +211,21 @@ class BrandInfo {
     required this.terms,
     required this.branches,
     this.logoUrl,
+    this.appIconUrl,
     this.primaryColor,
     this.secondaryColor,
   });
+
+  /// Logo uploaded in the admin app, then the app icon, then a branch logo.
+  String? get displayLogo {
+    final own = resolveMediaUrl(logoUrl) ?? resolveMediaUrl(appIconUrl);
+    if (own != null) return own;
+    for (final branch in branches) {
+      final mark = branch.logoUrl;
+      if (mark != null && mark.isNotEmpty) return mark;
+    }
+    return null;
+  }
 
   factory BrandInfo.parse(Map<String, dynamic> json) {
     final targetBrandId = (json['brandId'] ?? json['id'] ?? AppConfig.brandId) as String;
@@ -204,7 +235,13 @@ class BrandInfo {
           item['id'] is String &&
           item['name'] is String &&
           (item['brandId'] == null || item['brandId'] == targetBrandId)) {
-        branches.add(Branch(item['id'] as String, item['name'] as String));
+        branches.add(
+          Branch(
+            item['id'] as String,
+            item['name'] as String,
+            logoUrl: resolveMediaUrl(item['logoUrl'] as String?),
+          ),
+        );
       }
     }
     return BrandInfo(
@@ -213,6 +250,7 @@ class BrandInfo {
       terms: json['termsAndConditions'] as String? ?? '',
       branches: branches,
       logoUrl: json['logoUrl'] as String?,
+      appIconUrl: json['appIconUrl'] as String?,
       primaryColor: json['primaryColor'] as String?,
       secondaryColor: json['secondaryColor'] as String?,
     );
@@ -272,20 +310,20 @@ class BrandApi {
     final businessName = (json['businessName'] ?? json['name'] ?? slug) as String;
     final primaryColor = json['primaryColor'] as String?;
     final secondaryColor = json['secondaryColor'] as String?;
-    final logoUrl = json['logoUrl'] as String?;
+    final info = BrandInfo.parse(json);
 
     AppConfig.setBrand(
       slug: slug,
       code: brandCode,
       id: brandId,
       name: businessName,
-      logoUrl: logoUrl,
+      logoUrl: info.displayLogo,
       primaryColor: primaryColor,
       secondaryColor: secondaryColor,
     );
     BrandColors.setDynamicColors(primaryColor, secondaryColor);
 
-    return BrandInfo.parse(json);
+    return info;
   }
 
   Future<List<PublicBrandSummary>> loadAllBrands() async {
@@ -325,19 +363,19 @@ class BrandApi {
     final businessName = (json['businessName'] ?? json['name'] ?? customSlug) as String;
     final primaryColor = json['primaryColor'] as String?;
     final secondaryColor = json['secondaryColor'] as String?;
-    final logoUrl = json['logoUrl'] as String?;
+    final info = BrandInfo.parse(json);
 
     AppConfig.setBrand(
       slug: customSlug,
       code: brandCode,
       id: brandId,
       name: businessName,
-      logoUrl: logoUrl,
+      logoUrl: info.displayLogo,
       primaryColor: primaryColor,
       secondaryColor: secondaryColor,
     );
     BrandColors.setDynamicColors(primaryColor, secondaryColor);
 
-    return BrandInfo.parse(json);
+    return info;
   }
 }

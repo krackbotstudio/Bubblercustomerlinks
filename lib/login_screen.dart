@@ -205,32 +205,15 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ),
                                   child: ClipRRect(
                                     borderRadius: BorderRadius.circular(20),
-                                    child: () {
-                                      final logo = widget.brand?.logoUrl ??
-                                          AppConfig.brandLogoUrl;
-                                      final size = sending ? 112.0 : 84.0;
-                                      if (logo != null && logo.isNotEmpty) {
-                                        return Image.network(
-                                          logo,
-                                          width: size,
-                                          height: size,
-                                          fit: BoxFit.contain,
-                                          errorBuilder: (_, __, ___) =>
-                                              Image.asset(
-                                            BrandColors.logo,
-                                            width: size,
-                                            height: size,
-                                            fit: BoxFit.contain,
-                                          ),
-                                        );
-                                      }
-                                      return Image.asset(
-                                        BrandColors.logo,
-                                        width: size,
-                                        height: size,
-                                        fit: BoxFit.contain,
-                                      );
-                                    }(),
+                                    child: BrandMark(
+                                      url:
+                                          widget.brand?.displayLogo ??
+                                          AppConfig.brandLogoUrl,
+                                      name:
+                                          widget.brand?.name ??
+                                          AppConfig.brandName,
+                                      size: sending ? 112 : 84,
+                                    ),
                                   ),
                                 ),
                                 const SizedBox(height: 14),

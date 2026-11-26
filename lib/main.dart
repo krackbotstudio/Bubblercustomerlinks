@@ -598,32 +598,13 @@ class _CustomerShellState extends State<CustomerShell> {
                             children: [
                               ClipRRect(
                                 borderRadius: BorderRadius.circular(10),
-                                  child: () {
-                                    final logo =
-                                        brand?.logoUrl ??
-                                        AppConfig.brandLogoUrl;
-                                    if (logo != null && logo.isNotEmpty) {
-                                      return Image.network(
-                                        logo,
-                                        width: 34,
-                                        height: 34,
-                                        fit: BoxFit.contain,
-                                        errorBuilder: (_, __, ___) =>
-                                            Image.asset(
-                                              BrandColors.logo,
-                                              width: 34,
-                                              height: 34,
-                                              fit: BoxFit.contain,
-                                            ),
-                                      );
-                                    }
-                                    return Image.asset(
-                                      BrandColors.logo,
-                                      width: 34,
-                                      height: 34,
-                                      fit: BoxFit.contain,
-                                    );
-                                  }(),
+                                child: BrandMark(
+                                  url:
+                                      brand?.displayLogo ??
+                                      AppConfig.brandLogoUrl,
+                                  name: brand?.name ?? AppConfig.brandName,
+                                  size: 34,
+                                ),
                               ),
                               const SizedBox(width: 12),
                               Expanded(

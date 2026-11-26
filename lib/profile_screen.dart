@@ -186,10 +186,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(20),
-                    child: Image.asset(BrandColors.logo, width: 84, height: 84),
+                    child: BrandMark(
+                      url:
+                          widget.brand?.displayLogo ?? AppConfig.brandLogoUrl,
+                      name: widget.brand?.name ?? AppConfig.brandName,
+                      size: 84,
+                    ),
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
+                Text(
+                  widget.brand?.name ?? AppConfig.brandName,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: mutedText(context),
+                  ),
+                ),
+                const SizedBox(height: 8),
                 Text(
                   signedIn
                       ? (customer?.name?.trim().isNotEmpty == true
