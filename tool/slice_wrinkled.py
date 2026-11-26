@@ -12,7 +12,7 @@ from PIL import Image
 src = Path(
     r"C:\Users\sanje\.cursor\projects\d-SaaS-Application-Projects-bubbler-customer-side-links-Bubblercustomerlinks\assets\image-341ffdc6-d1ad-4fb8-b130-0e009ec34487.png"
 )
-out = Path(__file__).resolve().parents[1] / "assets" / "laundry" / "wrinkled"
+out = Path(__file__).resolve().parents[1] / "assets" / "laundry" / "outline"
 out.mkdir(parents=True, exist_ok=True)
 
 # Same left-to-right, top-to-bottom order as the sheet.
@@ -63,19 +63,22 @@ keep = {
 }
 
 
-def trim(image, pad=6):
-    bbox = image.getbbox()
-    if not bbox:
-        return image
-    left, top, right, bottom = bbox
-    return image.crop(
-        (
-            max(0, left - pad),
-            max(0, top - pad),
-            min(image.width, right + pad),
-            min(image.height, bottom + pad),
-        )
+def render(image, points, pad=8):
+    """Copy only this garment's pixels. A bounding-box crop keeps neighbors."""
+    pixels = image.load()
+    xs = [x for x, _ in points]
+    ys = [y for _, y in points]
+    min_x, max_x = min(xs), max(xs)
+    min_y, max_y = min(ys), max(ys)
+    crop = Image.new(
+        "RGBA",
+        (max_x - min_x + 1 + pad * 2, max_y - min_y + 1 + pad * 2),
+        (0, 0, 0, 0),
     )
+    target = crop.load()
+    for x, y in points:
+        target[x - min_x + pad, y - min_y + pad] = pixels[x, y]
+    return crop
 
 
 def components(image, alpha=40, min_area=400):
@@ -90,12 +93,12 @@ def components(image, alpha=40, min_area=400):
                 continue
             queue = deque([(x, y)])
             seen[index] = 1
+            points = []
             min_x = max_x = x
             min_y = max_y = y
-            area = 0
             while queue:
                 cx, cy = queue.popleft()
-                area += 1
+                points.append((cx, cy))
                 min_x = min(min_x, cx)
                 max_x = max(max_x, cx)
                 min_y = min(min_y, cy)
@@ -111,8 +114,8 @@ def components(image, alpha=40, min_area=400):
                         if not seen[neighbor] and pixels[nx, ny][3] >= alpha:
                             seen[neighbor] = 1
                             queue.append((nx, ny))
-            if area > min_area:
-                found.append((min_y, min_x, max_x, max_y, area))
+            if len(points) > min_area:
+                found.append((min_y, min_x, max_x, max_y, points))
     found.sort(
         key=lambda box: (
             0
@@ -137,12 +140,12 @@ def main():
         for box in found:
             print(box)
         raise SystemExit(f"expected {len(order)} pieces, found {len(found)}")
-    for name, (min_y, min_x, max_x, max_y, area) in zip(order, found):
+    for name, (min_y, min_x, max_x, max_y, points) in zip(order, found):
         if name not in keep:
             continue
-        crop = trim(clothes.crop((min_x, min_y, max_x + 1, max_y + 1)))
+        crop = render(clothes, points)
         crop.save(out / f"{name}.png")
-        print(name, crop.size, "area", area)
+        print(name, crop.size, "pixels", len(points))
 
 
 if __name__ == "__main__":

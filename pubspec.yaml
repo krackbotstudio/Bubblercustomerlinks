@@ -43,4 +43,5 @@ flutter:
     - assets/laundry/
     - assets/laundry/folded/
     - assets/laundry/wrinkled/
+    - assets/laundry/outline/
     - assets/laundry/catalog/
