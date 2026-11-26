@@ -100,7 +100,7 @@ class _BrandSelectorScreenState extends State<BrandSelectorScreen> {
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
-                                color: Color(0xFF8B5CF6),
+                                color: Bubbler.ink,
                                 letterSpacing: 0.5,
                               ),
                             ),
@@ -109,7 +109,8 @@ class _BrandSelectorScreenState extends State<BrandSelectorScreen> {
                               style: TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.w800,
-                                color: Color(0xFF1E1640),
+                                fontFamily: Bubbler.display,
+                                color: Bubbler.ink,
                                 letterSpacing: -0.5,
                               ),
                             ),

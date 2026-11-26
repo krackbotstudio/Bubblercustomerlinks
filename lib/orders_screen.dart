@@ -454,7 +454,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                                       ][index],
                                       size: 17,
                                       color: index <= current.trackingStage!
-                                          ? Colors.white
+                                          ? Bubbler.ink
                                           : Theme.of(context)
                                                 .colorScheme
                                                 .onSurface

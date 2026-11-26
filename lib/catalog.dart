@@ -57,6 +57,28 @@ class CatalogItem {
   int? get startingPrice => prices.isEmpty
       ? null
       : prices.map((p) => p.paise).reduce((a, b) => a < b ? a : b);
+  /// Men, women, kids, or household, from a catalogue segment name.
+  static String? wearForSegment(String segment) {
+    final text = segment.toLowerCase();
+    if (text.contains('women') || text.contains('woman')) return 'women';
+    if (text.contains('kid') || text.contains('child')) return 'kids';
+    if (text.contains('home') ||
+        text.contains('linen') ||
+        text.contains('house')) {
+      return 'household';
+    }
+    if (text.contains('men') || text.contains('man')) return 'men';
+    return null;
+  }
+
+  bool listedFor(String wear) {
+    final groups = {
+      for (final price in prices) wearForSegment(price.segment),
+    };
+    if (groups.contains(wear)) return true;
+    return groups.every((group) => group == null);
+  }
+
   bool matches(String query) {
     final terms = query
         .trim()

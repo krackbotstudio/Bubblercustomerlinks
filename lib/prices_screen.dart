@@ -27,6 +27,7 @@ class _PricesScreenState extends State<PricesScreen>
   final search = TextEditingController();
   final scroll = ScrollController();
   String? branchId, flippedId, error;
+  var wear = 'men';
   List<CatalogItem> items = [];
   bool loading = false;
   int generation = 0;
@@ -109,7 +110,9 @@ class _PricesScreenState extends State<PricesScreen>
 
   @override
   Widget build(BuildContext context) {
-    final filtered = items.where((item) => item.matches(search.text)).toList();
+    final filtered = items
+        .where((item) => item.listedFor(wear) && item.matches(search.text))
+        .toList();
     return RefreshIndicator(
       onRefresh: refresh,
       child: CustomScrollView(
@@ -133,54 +136,31 @@ class _PricesScreenState extends State<PricesScreen>
                       ),
                     ],
                   ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 4),
-                    child: Text(
-                      'Select branch',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                      ),
+                  if (widget.branches.isNotEmpty) ...[
+                    _BranchPicker(
+                      branches: widget.branches,
+                      selectedId: branchId,
+                      onSelect: (id) {
+                        if (id == branchId) return;
+                        search.clear();
+                        if (scroll.hasClients) scroll.jumpTo(0);
+                        load(id);
+                      },
                     ),
+                    const SizedBox(height: 16),
+                  ],
+                  _PriceWearBar(
+                    selected: wear,
+                    onSelect: (id) {
+                      if (id == wear) return;
+                      setState(() {
+                        wear = id;
+                        flippedId = null;
+                      });
+                      if (scroll.hasClients) scroll.jumpTo(0);
+                    },
                   ),
-                  if (widget.branches.isNotEmpty)
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      clipBehavior: Clip.none,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      child: Row(
-                        children: widget.branches
-                            .map(
-                              (branch) => Padding(
-                                padding: const EdgeInsets.only(right: 12),
-                                child: NeuOption(
-                                  key: Key('branch-${branch.id}'),
-                                  selected: branch.id == branchId,
-                                  radius: 22,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 18,
-                                    vertical: 11,
-                                  ),
-                                  onTap: () {
-                                    if (branch.id == branchId) return;
-                                    search.clear();
-                                    if (scroll.hasClients) scroll.jumpTo(0);
-                                    load(branch.id);
-                                  },
-                                  child: Text(
-                                    branch.name,
-                                    style: const TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            )
-                            .toList(),
-                      ),
-                    ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 14),
                   NeuField(
                     leading: IconChip(
                       Icon(
@@ -258,7 +238,9 @@ class _PricesScreenState extends State<PricesScreen>
                 child: Text(
                   items.isEmpty
                       ? 'No catalogue prices are available for this branch yet.'
-                      : 'No matching items. Try another search.',
+                      : items.any((item) => item.listedFor(wear))
+                      ? 'No matching items. Try another search.'
+                      : 'No items in this category.',
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -274,13 +256,14 @@ class _PricesScreenState extends State<PricesScreen>
                       crossAxisCount: 2,
                       crossAxisSpacing: 16,
                       mainAxisSpacing: 16,
-                      mainAxisExtent: math.max(206, width * 1.28),
+                      mainAxisExtent: math.max(236, width * 1.42),
                     ),
                     delegate: SliverChildBuilderDelegate((context, index) {
                       final item = filtered[index];
                       return PriceFlipCard(
                         key: ValueKey('$branchId/${item.id}'),
                         item: item,
+                        wear: wear,
                         flipped: flippedId == item.id,
                         onTap: () => setState(
                           () =>
@@ -298,13 +281,169 @@ class _PricesScreenState extends State<PricesScreen>
   }
 }
 
+const _priceWears = [
+  ('men', 'Men'),
+  ('women', 'Women'),
+  ('kids', 'Kids'),
+  ('household', 'Household'),
+];
+
+class _BranchPicker extends StatelessWidget {
+  final List<Branch> branches;
+  final String? selectedId;
+  final ValueChanged<String> onSelect;
+  const _BranchPicker({
+    required this.branches,
+    required this.selectedId,
+    required this.onSelect,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+      decoration: neuRaised(dark, radius: 22, depth: 4),
+      child: Row(
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: const BoxDecoration(
+              color: Bubbler.yellow,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.storefront_rounded,
+              size: 18,
+              color: Bubbler.ink,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Branch',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: mutedText(context),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      for (final branch in branches)
+                        Padding(
+                          padding: const EdgeInsets.only(right: 16),
+                          child: InkWell(
+                            key: Key('branch-${branch.id}'),
+                            onTap: () => onSelect(branch.id),
+                            child: _LinkLabel(
+                              label: branch.name,
+                              selected: branch.id == selectedId,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PriceWearBar extends StatelessWidget {
+  final String selected;
+  final ValueChanged<String> onSelect;
+  const _PriceWearBar({required this.selected, required this.onSelect});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        for (final group in _priceWears)
+          Expanded(
+            child: InkWell(
+              key: Key('price-wear-${group.$1}'),
+              onTap: () => onSelect(group.$1),
+              child: _LinkLabel(
+                label: group.$2,
+                selected: group.$1 == selected,
+                centered: true,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _LinkLabel extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final bool centered;
+  const _LinkLabel({
+    required this.label,
+    required this.selected,
+    this.centered = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Text(
+      label,
+      maxLines: 1,
+      softWrap: false,
+      overflow: TextOverflow.ellipsis,
+      textAlign: centered ? TextAlign.center : TextAlign.start,
+      style: TextStyle(
+        fontFamily: selected ? Bubbler.display : null,
+        fontSize: centered ? 13 : (selected ? 16 : 14),
+        fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+        color: selected
+            ? Theme.of(context).colorScheme.onSurface
+            : mutedText(context),
+      ),
+    );
+    return Column(
+      crossAxisAlignment: centered
+          ? CrossAxisAlignment.center
+          : CrossAxisAlignment.start,
+      children: [
+        centered ? SizedBox(width: double.infinity, child: text) : text,
+        const SizedBox(height: 4),
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          height: 3,
+          width: selected ? 18 : 0,
+          decoration: BoxDecoration(
+            color: Bubbler.yellow,
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class PriceFlipCard extends StatelessWidget {
   final CatalogItem item;
+  final String wear;
   final bool flipped;
   final VoidCallback onTap;
   const PriceFlipCard({
     super.key,
     required this.item,
+    required this.wear,
     required this.flipped,
     required this.onTap,
   });
@@ -337,7 +476,7 @@ class PriceFlipCard extends StatelessWidget {
                 decoration: neuRaised(
                   Theme.of(context).brightness == Brightness.dark,
                   radius: 22,
-                  depth: 6,
+                  depth: 4,
                 ),
                 child: back ? backFace(context) : frontFace(context),
               ),
@@ -348,41 +487,77 @@ class PriceFlipCard extends StatelessWidget {
     ),
   );
 
-  Widget fromPrice(BuildContext context) => item.startingPrice == null
-      ? const SizedBox.shrink()
-      : Text(
-          'From ${rupees(item.startingPrice!)}',
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            fontWeight: FontWeight.w700,
-            color: Theme.of(context).colorScheme.primary,
-          ),
-        );
-  Widget frontFace(BuildContext context) => Column(
-    children: [
-      Expanded(
-        child: SizedBox(
-          width: double.infinity,
-          child: CatalogArt(item: item),
-        ),
-      ),
-      Padding(
-        padding: const EdgeInsets.fromLTRB(8, 8, 8, 10),
-        child: Column(
+  Widget fromPrice(BuildContext context) {
+    final amount = item.startingPrice;
+    if (amount == null) return const SizedBox.shrink();
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      alignment: Alignment.centerLeft,
+      child: Text.rich(
+        TextSpan(
           children: [
-            Text(
-              item.name,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+            TextSpan(
+              text: 'From ',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: mutedText(context),
+              ),
             ),
-            const SizedBox(height: 4),
-            fromPrice(context),
+            TextSpan(
+              text: rupees(amount),
+              style: TextStyle(
+                fontFamily: Bubbler.display,
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
+                color: Theme.of(context).colorScheme.onSurface,
+                height: 1.05,
+              ),
+            ),
           ],
         ),
       ),
-    ],
-  );
+    );
+  }
+
+  Widget frontFace(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Expanded(
+          child: Container(
+            margin: const EdgeInsets.fromLTRB(8, 8, 8, 0),
+            decoration: BoxDecoration(
+              color: dark ? const Color(0xFF242132) : const Color(0xFFFFF6EE),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: CatalogArt(item: item, wear: wear),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                item.name,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 15,
+                  height: 1.15,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 6),
+              fromPrice(context),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
   Widget backFace(BuildContext context) => Padding(
     padding: const EdgeInsets.all(12),
     child: Column(
@@ -414,10 +589,12 @@ class PriceFlipCard extends StatelessWidget {
                             children: [
                               Expanded(
                                 child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment.stretch,
                                   children: [
                                     Text(
                                       price.segment,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
                                       style: const TextStyle(
                                         fontSize: 11,
                                         fontWeight: FontWeight.w600,
@@ -425,6 +602,8 @@ class PriceFlipCard extends StatelessWidget {
                                     ),
                                     Text(
                                       price.service,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
                                       style: Theme.of(context)
                                           .textTheme
                                           .bodySmall
@@ -434,12 +613,21 @@ class PriceFlipCard extends StatelessWidget {
                                 ),
                               ),
                               const SizedBox(width: 6),
-                              Text(
-                                rupees(price.paise),
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w800,
-                                  color: Theme.of(context).colorScheme.primary,
+                              Flexible(
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  alignment: Alignment.centerRight,
+                                  child: Text(
+                                    rupees(price.paise),
+                                    style: TextStyle(
+                                      fontFamily: Bubbler.display,
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w800,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onSurface,
+                                    ),
+                                  ),
                                 ),
                               ),
                             ],
@@ -459,9 +647,73 @@ class PriceFlipCard extends StatelessWidget {
   );
 }
 
+/// Garment from the latest clothes sheet, when the catalogue name matches.
+String? garmentAssetFor(String name, {String wear = ''}) {
+  final text = name.toLowerCase();
+  const root = 'assets/laundry/catalog';
+  final kids = wear == 'kids';
+  if (text.contains('t-shirt') ||
+      text.contains('tshirt') ||
+      text.contains('t shirt') ||
+      text.contains('tee shirt')) {
+    return kids ? '$root/kidstee.png' : '$root/tshirt.png';
+  }
+  if (text.contains('polo')) return '$root/polo.png';
+  if (text.contains('hoodie') || text.contains('sweat')) {
+    return kids ? '$root/kidhoodie.png' : '$root/hoodie.png';
+  }
+  if (text.contains('blazer') ||
+      text.contains('suit') ||
+      text.contains('jacket')) {
+    return '$root/blazer.png';
+  }
+  if (text.contains('kurti')) return '$root/kurti.png';
+  if (text.contains('kurta')) return '$root/kurta.png';
+  if (text.contains('salwar') || text.contains('kameez')) {
+    return '$root/salwar.png';
+  }
+  if (text.contains('lehenga') || text.contains('skirt')) {
+    return kids ? '$root/kidskirt.png' : '$root/skirt.png';
+  }
+  if (text.contains('saree') || text.contains('sari')) return '$root/saree.png';
+  if (text.contains('uniform')) return '$root/uniform.png';
+  if (text.contains('jean')) {
+    return kids ? '$root/kidpants.png' : '$root/trousers.png';
+  }
+  if (text.contains('trouser') || text.contains('pant')) {
+    return kids ? '$root/kidpants.png' : '$root/trousers.png';
+  }
+  if (text.contains('short')) {
+    return kids ? '$root/kidshorts.png' : '$root/shorts.png';
+  }
+  if (text.contains('dress') || text.contains('gown')) {
+    return kids ? '$root/kiddress.png' : '$root/dress.png';
+  }
+  if (text.contains('curtain') || text.contains('drape')) {
+    return '$root/curtain.png';
+  }
+  if (text.contains('towel')) return '$root/towel.png';
+  if (text.contains('blanket') ||
+      text.contains('quilt') ||
+      text.contains('comforter')) {
+    return '$root/blanket.png';
+  }
+  if (text.contains('pillow') || text.contains('cushion')) {
+    return '$root/pillow.png';
+  }
+  if (text.contains('bedsheet') ||
+      text.contains('bed sheet') ||
+      text.contains('linen')) {
+    return '$root/bedsheet.png';
+  }
+  if (text.contains('shirt')) return '$root/shirt.png';
+  return null;
+}
+
 class CatalogArt extends StatelessWidget {
   final CatalogItem item;
-  const CatalogArt({super.key, required this.item});
+  final String wear;
+  const CatalogArt({super.key, required this.item, this.wear = ''});
   @override
   Widget build(BuildContext context) {
     final fallback = Center(
@@ -480,7 +732,14 @@ class CatalogArt extends StatelessWidget {
         color: Theme.of(context).colorScheme.primary,
       ),
     );
+    final local = garmentAssetFor(item.name, wear: wear);
     final image = item.imageUri;
+    if (image == null && local != null) {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(10, 12, 10, 8),
+        child: Image.asset(local, fit: BoxFit.contain),
+      );
+    }
     return image == null
         ? fallback
         : Image.network(

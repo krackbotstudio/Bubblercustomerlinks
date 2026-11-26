@@ -238,10 +238,11 @@ class _LoginScreenState extends State<LoginScreen> {
                                   widget.brand?.name ?? AppConfig.brandName,
                                   textAlign: TextAlign.center,
                                   style: const TextStyle(
+                                    fontFamily: Bubbler.display,
                                     color: BrandColors.ink,
-                                    fontSize: 22,
+                                    fontSize: 26,
                                     fontWeight: FontWeight.w800,
-                                    letterSpacing: -.3,
+                                    letterSpacing: -0.6,
                                   ),
                                 ),
                                 if (widget.onChangeBrand != null) ...[
@@ -257,14 +258,14 @@ class _LoginScreenState extends State<LoginScreen> {
                                         children: const [
                                           Icon(Icons.swap_horiz_rounded,
                                               size: 16,
-                                              color: Color(0xFF8B5CF6)),
+                                              color: Bubbler.ink),
                                           SizedBox(width: 4),
                                           Text(
                                             'Change laundry',
                                             style: TextStyle(
                                               fontSize: 12,
-                                              fontWeight: FontWeight.w600,
-                                              color: Color(0xFF8B5CF6),
+                                              fontWeight: FontWeight.w700,
+                                              color: Bubbler.ink,
                                             ),
                                           ),
                                         ],
@@ -296,9 +297,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                 textAlign: TextAlign.center,
                                 style: const TextStyle(
                                   color: BrandColors.ink,
-                                  fontSize: 30,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: -.5,
+                                    fontFamily: Bubbler.display,
+                                    fontSize: 34,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: -0.8,
                                 ),
                               ),
                             ),
@@ -331,17 +333,20 @@ class _LoginScreenState extends State<LoginScreen> {
                                         ),
                                         decoration: BoxDecoration(
                                           color: _greetingIndex == i
-                                              ? BrandColors.purple
-                                              : BrandColors.purpleSoft,
+                                              ? Bubbler.yellow
+                                              : Colors.white,
                                           borderRadius:
                                               BorderRadius.circular(20),
+                                          border: Border.all(
+                                            color: _greetingIndex == i
+                                                ? Bubbler.yellow
+                                                : Bubbler.line,
+                                          ),
                                         ),
                                         child: Text(
                                           _greetings[i].lang,
                                           style: TextStyle(
-                                            color: _greetingIndex == i
-                                                ? Colors.white
-                                                : BrandColors.purpleDeep,
+                                            color: Bubbler.ink,
                                             fontSize: 12,
                                             fontWeight: _greetingIndex == i
                                                 ? FontWeight.w700
@@ -411,7 +416,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                           margin: const EdgeInsets.symmetric(
                                             horizontal: 10,
                                           ),
-                                          color: const Color(0xFFD6D7E6),
+                                          color: Bubbler.line,
                                         ),
                                         Expanded(
                                           child: TextFormField(
@@ -588,7 +593,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     children: [
                                       Expanded(
                                         child: Divider(
-                                          color: Color(0xFFD9DAE8),
+                                          color: Bubbler.line,
                                         ),
                                       ),
                                       Padding(
@@ -607,7 +612,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                       ),
                                       Expanded(
                                         child: Divider(
-                                          color: Color(0xFFD9DAE8),
+                                          color: Bubbler.line,
                                         ),
                                       ),
                                     ],
@@ -638,7 +643,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                         icon: Icon(
                                           Icons.person_outline_rounded,
                                           size: 18,
-                                          color: BrandColors.purple,
+                                          color: Bubbler.ink,
                                         ),
                                         label: const Text('Continue as guest'),
                                       ),
@@ -658,7 +663,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                         TextSpan(
                                           text: 'Verify your number to sign up',
                                           style: TextStyle(
-                                            color: BrandColors.purple,
+                                            color: Bubbler.ink,
                                             fontWeight: FontWeight.w600,
                                           ),
                                         ),
@@ -696,7 +701,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget legalLink(BuildContext context, String label, String body) =>
       TextButton(
         style: TextButton.styleFrom(
-          foregroundColor: BrandColors.purple,
+          foregroundColor: Bubbler.ink,
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
           minimumSize: Size.zero,
           tapTargetSize: MaterialTapTargetSize.shrinkWrap,

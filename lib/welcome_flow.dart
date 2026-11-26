@@ -90,7 +90,7 @@ class SplashScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => const Scaffold(
-    backgroundColor: BrandColors.purpleDeep,
+    backgroundColor: Bubbler.cream,
     body: BrandBackdrop(child: Center(child: _LogoMark(width: 210))),
   );
 }
@@ -148,7 +148,7 @@ class _WelcomeFlowState extends State<WelcomeFlow>
   Widget build(BuildContext context) {
     final copy = IntroCopy.of(widget.language);
     return Scaffold(
-      backgroundColor: BrandColors.purpleDeep,
+      backgroundColor: Bubbler.cream,
       body: BrandBackdrop(
         child: switch (phase) {
           _Phase.splash => FadeTransition(
@@ -222,23 +222,13 @@ class _GlassHero extends StatelessWidget {
               height: 190,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Colors.white.withValues(alpha: .42),
-                    Colors.white.withValues(alpha: .12),
-                  ],
-                ),
-                border: Border.all(
-                  color: Colors.white.withValues(alpha: .6),
-                  width: 1.4,
-                ),
+                color: Colors.white,
+                border: Border.all(color: Bubbler.line, width: 1.4),
               ),
               child: const Icon(
                 Icons.local_laundry_service_rounded,
                 size: 92,
-                color: Colors.white,
+                color: Bubbler.ink,
               ),
             ),
           ),
@@ -246,7 +236,7 @@ class _GlassHero extends StatelessWidget {
         const Positioned(
           top: 6,
           right: 8,
-          child: Icon(Icons.auto_awesome, size: 40, color: Colors.white),
+          child: Icon(Icons.auto_awesome, size: 40, color: Bubbler.yellow),
         ),
         Positioned(
           bottom: 22,
@@ -254,7 +244,7 @@ class _GlassHero extends StatelessWidget {
           child: Icon(
             Icons.auto_awesome,
             size: 22,
-            color: Colors.white.withValues(alpha: .8),
+            color: Bubbler.yellow.withValues(alpha: .85),
           ),
         ),
       ],
@@ -342,11 +332,11 @@ class _LanguageButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Material(
-    color: selected ? BrandColors.purpleSoft : Colors.white,
+    color: selected ? Bubbler.yellow : Colors.white,
     shape: RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(14),
       side: BorderSide(
-        color: selected ? BrandColors.purple : const Color(0xFFE4D4F2),
+        color: selected ? Bubbler.yellow : Bubbler.line,
         width: selected ? 1.6 : 1,
       ),
     ),
@@ -359,7 +349,7 @@ class _LanguageButton extends StatelessWidget {
           child: Text(
             label,
             style: TextStyle(
-              color: selected ? BrandColors.purple : BrandColors.ink,
+              color: Bubbler.ink,
               fontSize: 15,
               fontWeight: FontWeight.w600,
             ),
@@ -425,12 +415,8 @@ class _WelcomeStep extends StatelessWidget {
                   child: Text(copy.getStarted),
                 ),
                 const SizedBox(height: 10),
-                FilledButton(
+                OutlinedButton(
                   key: const Key('intro-have-account'),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFFF1EEF4),
-                    foregroundColor: BrandColors.ink,
-                  ),
                   onPressed: onHaveAccount,
                   child: Text(copy.haveAccount),
                 ),
@@ -447,7 +433,7 @@ class _WelcomeStep extends StatelessWidget {
                       TextSpan(
                         text: copy.terms,
                         style: const TextStyle(
-                          color: BrandColors.purple,
+                          color: Bubbler.ink,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -455,7 +441,7 @@ class _WelcomeStep extends StatelessWidget {
                       TextSpan(
                         text: copy.privacy,
                         style: const TextStyle(
-                          color: BrandColors.purple,
+                          color: Bubbler.ink,
                           fontWeight: FontWeight.w600,
                         ),
                       ),

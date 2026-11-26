@@ -19,12 +19,12 @@ abstract class BrandColors {
   static Color purpleDeep = const Color(0xFF3D1468);
   static Color purpleBright = const Color(0xFF7A45B0);
   static Color purpleSoft = const Color(0xFFE7D4F6);
-  static const mist = Color(0xFFF6F1FB);
-  static const ink = Color(0xFF1A1024);
-  static const sheetLight = Color(0xFFF4F1FA);
-  static const sheetDark = Color(0xFF140A1C);
-  static const muted = Color(0xFF6B6880);
-  static const mutedDark = Color(0xFFA9A3BC);
+  static const mist = Color(0xFFFFF4DC);
+  static const ink = Color(0xFF1E1C2B);
+  static const sheetLight = Color(0xFFFDF6F0);
+  static const sheetDark = Color(0xFF1E1C2B);
+  static const muted = Color(0xFF6E687C);
+  static const mutedDark = Color(0xFFC8C2D4);
   static const danger = Color(0xFFD64550);
   static const logo = 'assets/vclean-logo.png';
   static const logoOnPurple = 'assets/vclean-badge-purple.png';
@@ -51,26 +51,36 @@ abstract class BrandColors {
   }
 }
 
-/// Neumorphic palette: every raised surface shares the page colour and is
-/// shaped only by a light shadow top-left and a dark shadow bottom-right.
+/// Palette sampled from bubbler.tectangle.com: cream page, navy ink, yellow
+/// pills, and white cards with a warm hairline.
+abstract final class Bubbler {
+  static const cream = Color(0xFFFDF6F0);
+  static const ink = Color(0xFF1E1C2B);
+  static const navy = Color(0xFF242132);
+  static const yellow = Color(0xFFFFC20E);
+  static const line = Color(0xFFEFE5DA);
+  static const card = Color(0xFFFFFFFF);
+  static const cardDark = Color(0xFF2C2940);
+  static const muted = Color(0xFF6E687C);
+
+  static const display = 'Outfit';
+  static const text = 'PlusJakartaSans';
+}
+
+/// Flat card palette. Surfaces sit on the cream page with one soft shadow.
 abstract final class Neu {
-  static const light = Color(0xFFEDEDF6);
-  static const dark = Color(0xFF1C1229);
-  static const _lightShade = Color(0xFFC4C5DC);
-  static const _darkHighlight = Color(0xFF2C1F40);
+  static const light = Bubbler.cream;
+  static const dark = Bubbler.ink;
 
   static Color base(bool dark) => dark ? Neu.dark : Neu.light;
 
+  static Color card(bool dark) => dark ? Bubbler.cardDark : Bubbler.card;
+
   static List<BoxShadow> raised(bool dark, {double depth = 6}) => [
     BoxShadow(
-      color: dark ? _darkHighlight : Colors.white,
-      offset: Offset(-depth, -depth),
-      blurRadius: depth * 2.4,
-    ),
-    BoxShadow(
-      color: dark ? Colors.black.withValues(alpha: .6) : _lightShade,
-      offset: Offset(depth, depth),
-      blurRadius: depth * 2.4,
+      color: dark ? const Color(0x66000000) : const Color(0x14242132),
+      offset: Offset(0, depth * .45),
+      blurRadius: depth * 2.2,
     ),
   ];
 }
@@ -81,45 +91,36 @@ BoxDecoration neuRaised(
   BoxShape shape = BoxShape.rectangle,
   double depth = 6,
 }) => BoxDecoration(
-  color: Neu.base(dark),
+  color: Neu.card(dark),
   shape: shape,
   borderRadius: shape == BoxShape.circle ? null : BorderRadius.circular(radius),
+  border: Border.all(
+    color: dark ? const Color(0x14FFFFFF) : Bubbler.line,
+  ),
   boxShadow: Neu.raised(dark, depth: depth),
 );
 
-/// Pressed-in look for fields, approximated with a shaded fill and rim.
+/// Inset field well: warm fill and a hairline, not a carved shadow.
 BoxDecoration neuPressed(bool dark, {double radius = 16}) => BoxDecoration(
   borderRadius: BorderRadius.circular(radius),
-  gradient: LinearGradient(
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-    colors: dark
-        ? const [Color(0xFF140C1F), Color(0xFF241835)]
-        : const [Color(0xFFDDDEEC), Color(0xFFF6F6FB)],
-  ),
+  color: dark ? const Color(0xFF241F36) : const Color(0xFFFFFCF8),
   border: Border.all(
-    color: dark ? Colors.white.withValues(alpha: .05) : Colors.white,
+    color: dark ? const Color(0x14FFFFFF) : Bubbler.line,
   ),
 );
 
-/// Soft diagonal wash used behind sign-in and every signed-in page.
+/// Cream page used behind sign-in and every signed-in screen.
 BoxDecoration pageBackdrop(bool dark) => BoxDecoration(
-  gradient: LinearGradient(
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-    colors: dark
-        ? const [Color(0xFF261841), Neu.dark, Color(0xFF160D21)]
-        : const [Color(0xFFF4F2FC), Neu.light, Color(0xFFE8E5F6)],
-  ),
+  color: dark ? Bubbler.ink : Bubbler.cream,
 );
 
-LinearGradient get brandGradient => LinearGradient(
+LinearGradient get brandGradient => const LinearGradient(
   begin: Alignment.topLeft,
   end: Alignment.bottomRight,
-  colors: [BrandColors.purpleBright, BrandColors.purple],
+  colors: [Bubbler.yellow, Color(0xFFFFD24A)],
 );
 
-/// Purple gradient surface with the glow used by the sign-in CTA.
+/// Yellow pill used by the sign-in CTA and selected chips.
 BoxDecoration brandRaised({
   double radius = 18,
   BoxShape shape = BoxShape.rectangle,
@@ -127,11 +128,11 @@ BoxDecoration brandRaised({
   gradient: brandGradient,
   shape: shape,
   borderRadius: shape == BoxShape.circle ? null : BorderRadius.circular(radius),
-  boxShadow: [
+  boxShadow: const [
     BoxShadow(
-      color: BrandColors.purple.withValues(alpha: .36),
-      blurRadius: 16,
-      offset: const Offset(0, 6),
+      color: Color(0x52F2AE00),
+      blurRadius: 18,
+      offset: Offset(0, 8),
     ),
   ],
 );
@@ -161,7 +162,6 @@ Widget _gradientButtonLayer(
 ) {
   final disabled = states.contains(WidgetState.disabled);
   final pressed = states.contains(WidgetState.pressed);
-  final dark = Theme.of(context).brightness == Brightness.dark;
   return AnimatedOpacity(
     opacity: disabled ? .55 : 1,
     duration: const Duration(milliseconds: 200),
@@ -171,16 +171,10 @@ Widget _gradientButtonLayer(
         gradient: brandGradient,
         shadows: [
           BoxShadow(
-            color: BrandColors.purple.withValues(alpha: pressed ? .26 : .38),
-            blurRadius: pressed ? 10 : 20,
-            offset: Offset(0, pressed ? 4 : 9),
+            color: const Color(0x52F2AE00).withValues(alpha: pressed ? .7 : 1),
+            blurRadius: pressed ? 10 : 22,
+            offset: Offset(0, pressed ? 4 : 10),
           ),
-          if (!dark)
-            const BoxShadow(
-              color: Colors.white,
-              blurRadius: 10,
-              offset: Offset(-4, -4),
-            ),
         ],
       ),
       child: child,
@@ -194,16 +188,15 @@ Widget _raisedButtonLayer(
   Widget? child,
 ) {
   final disabled = states.contains(WidgetState.disabled);
-  final pressed = states.contains(WidgetState.pressed);
   final dark = Theme.of(context).brightness == Brightness.dark;
+  final border = dark ? Bubbler.cream : Bubbler.ink;
   return AnimatedOpacity(
-    opacity: disabled ? .55 : 1,
+    opacity: disabled ? .45 : 1,
     duration: const Duration(milliseconds: 200),
     child: DecoratedBox(
       decoration: ShapeDecoration(
-        shape: const StadiumBorder(),
-        color: Neu.base(dark),
-        shadows: Neu.raised(dark, depth: pressed ? 2 : 5),
+        shape: StadiumBorder(side: BorderSide(color: border, width: 1.5)),
+        color: Colors.transparent,
       ),
       child: child,
     ),
@@ -211,19 +204,17 @@ Widget _raisedButtonLayer(
 }
 
 ThemeData customerTheme(bool dark) {
-  final foreground = dark ? Colors.white : BrandColors.ink;
+  final foreground = dark ? Bubbler.cream : Bubbler.ink;
   final muted = dark ? BrandColors.mutedDark : BrandColors.muted;
   final canvas = Neu.base(dark);
-  final surface = Neu.base(dark);
-  final primary = dark ? const Color(0xFFC9A6E8) : BrandColors.purple;
-  final onPrimary = dark ? const Color(0xFF1A0B28) : Colors.white;
-  final border = dark
-      ? Colors.white.withValues(alpha: .08)
-      : const Color(0xFFDCDDEA);
-  final field = dark ? const Color(0xFF170E22) : const Color(0xFFE6E6F1);
+  final surface = Neu.card(dark);
+  final primary = Bubbler.ink;
+  final onPrimary = Bubbler.cream;
+  final border = dark ? const Color(0x14FFFFFF) : Bubbler.line;
+  final field = dark ? const Color(0xFF241F36) : Colors.white;
   final scheme =
       ColorScheme.fromSeed(
-        seedColor: BrandColors.purple,
+        seedColor: Bubbler.yellow,
         brightness: dark ? Brightness.dark : Brightness.light,
       ).copyWith(
         primary: primary,
@@ -239,22 +230,34 @@ ThemeData customerTheme(bool dark) {
     brightness: scheme.brightness,
     colorScheme: scheme,
     scaffoldBackgroundColor: canvas,
-    fontFamily: 'Roboto',
+    fontFamily: Bubbler.text,
     textTheme: TextTheme(
       headlineSmall: TextStyle(
-        fontSize: 26,
-        fontWeight: FontWeight.w700,
-        letterSpacing: -.4,
+        fontFamily: Bubbler.display,
+        fontSize: 28,
+        fontWeight: FontWeight.w800,
+        letterSpacing: -0.8,
+        height: 1.05,
         color: foreground,
       ),
       titleLarge: TextStyle(
+        fontFamily: Bubbler.display,
         fontSize: 22,
         fontWeight: FontWeight.w700,
-        letterSpacing: -.3,
+        letterSpacing: -0.4,
         color: foreground,
       ),
-      bodyMedium: TextStyle(fontSize: 14, color: foreground),
-      bodySmall: TextStyle(fontSize: 12, height: 1.4, color: muted),
+      bodyMedium: TextStyle(
+        fontFamily: Bubbler.text,
+        fontSize: 14,
+        color: foreground,
+      ),
+      bodySmall: TextStyle(
+        fontFamily: Bubbler.text,
+        fontSize: 12,
+        height: 1.4,
+        color: muted,
+      ),
     ),
     appBarTheme: AppBarTheme(
       backgroundColor: Colors.transparent,
@@ -264,10 +267,11 @@ ThemeData customerTheme(bool dark) {
       centerTitle: false,
       toolbarHeight: 64,
       titleTextStyle: TextStyle(
+        fontFamily: Bubbler.display,
         color: foreground,
         fontSize: 20,
         fontWeight: FontWeight.w700,
-        letterSpacing: -.3,
+        letterSpacing: -.4,
       ),
     ),
     actionIconTheme: ActionIconThemeData(
@@ -280,6 +284,7 @@ ThemeData customerTheme(bool dark) {
     ),
     cardTheme: CardThemeData(
       color: surface,
+      surfaceTintColor: Colors.transparent,
       elevation: 0,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
     ),
@@ -312,13 +317,11 @@ ThemeData customerTheme(bool dark) {
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: BorderSide(
-          color: dark ? Colors.white.withValues(alpha: .05) : Colors.white,
-        ),
+        borderSide: BorderSide(color: border),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: BorderSide(color: primary, width: 1.4),
+        borderSide: const BorderSide(color: Bubbler.ink, width: 1.6),
       ),
     ),
     filledButtonTheme: FilledButtonThemeData(
@@ -327,12 +330,16 @@ ThemeData customerTheme(bool dark) {
         minimumSize: const Size(double.infinity, 56),
         backgroundColor: Colors.transparent,
         disabledBackgroundColor: Colors.transparent,
-        foregroundColor: Colors.white,
-        disabledForegroundColor: Colors.white,
+        foregroundColor: Bubbler.ink,
+        disabledForegroundColor: Bubbler.ink,
         shadowColor: Colors.transparent,
         elevation: 0,
         shape: const StadiumBorder(),
-        textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+        textStyle: const TextStyle(
+          fontFamily: Bubbler.text,
+          fontSize: 16,
+          fontWeight: FontWeight.w700,
+        ),
         backgroundBuilder: _gradientButtonLayer,
       ),
     ),
@@ -340,51 +347,54 @@ ThemeData customerTheme(bool dark) {
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
         minimumSize: const Size(double.infinity, 52),
-        foregroundColor: primary,
-        disabledForegroundColor: primary,
+        foregroundColor: foreground,
+        disabledForegroundColor: foreground,
         backgroundColor: Colors.transparent,
         disabledBackgroundColor: Colors.transparent,
         elevation: 0,
         side: BorderSide.none,
         shape: const StadiumBorder(),
-        textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+        textStyle: const TextStyle(
+          fontFamily: Bubbler.text,
+          fontSize: 14,
+          fontWeight: FontWeight.w700,
+        ),
         backgroundBuilder: _raisedButtonLayer,
       ),
     ),
     textButtonTheme: TextButtonThemeData(
       style: TextButton.styleFrom(
-        foregroundColor: primary,
+        foregroundColor: foreground,
         textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
       ),
     ),
     snackBarTheme: SnackBarThemeData(
       behavior: SnackBarBehavior.floating,
-      backgroundColor: dark ? const Color(0xFF2C1F40) : BrandColors.ink,
+      backgroundColor: Bubbler.navy,
       contentTextStyle: const TextStyle(color: Colors.white, fontSize: 14),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
     ),
-    progressIndicatorTheme: ProgressIndicatorThemeData(color: primary),
+    progressIndicatorTheme: const ProgressIndicatorThemeData(
+      color: Bubbler.yellow,
+    ),
     switchTheme: SwitchThemeData(
       thumbColor: WidgetStateProperty.resolveWith(
         (states) => states.contains(WidgetState.selected)
-            ? Colors.white
+            ? Bubbler.ink
             : (dark ? const Color(0xFF6B6080) : Colors.white),
       ),
       trackColor: WidgetStateProperty.resolveWith(
         (states) => states.contains(WidgetState.selected)
-            ? BrandColors.purpleBright
-            : (dark ? const Color(0xFF170E22) : const Color(0xFFDDDEEC)),
+            ? Bubbler.yellow
+            : (dark ? const Color(0xFF241F36) : const Color(0xFFEFE5DA)),
       ),
       trackOutlineColor: const WidgetStatePropertyAll(Colors.transparent),
     ),
     chipTheme: ChipThemeData(
       backgroundColor: surface,
-      elevation: 3,
-      pressElevation: 1,
-      shadowColor: dark ? Colors.black : const Color(0xFFB8BAD4),
-      side: BorderSide(
-        color: dark ? Colors.white.withValues(alpha: .06) : Colors.white,
-      ),
+      elevation: 0,
+      pressElevation: 0,
+      side: BorderSide(color: border),
       shape: const StadiumBorder(),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
     ),
@@ -400,43 +410,31 @@ ThemeData customerTheme(bool dark) {
   );
 }
 
-/// Purple wash used behind splash, welcome, and sign-in.
+/// Cream wash used behind splash and welcome, with a yellow glow.
 class BrandBackdrop extends StatelessWidget {
   final Widget? child;
   const BrandBackdrop({super.key, this.child});
 
   @override
   Widget build(BuildContext context) => DecoratedBox(
-    decoration: const BoxDecoration(
-      gradient: LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: [
-          Color(0xFF4A1B78),
-          Color(0xFF6A35A8),
-          Color(0xFFC9A6E4),
-          BrandColors.mist,
-        ],
-        stops: [0, .38, .72, 1],
-      ),
-    ),
+    decoration: const BoxDecoration(color: Bubbler.cream),
     child: Stack(
       fit: StackFit.expand,
       children: [
         const Positioned(
           top: -70,
           right: -30,
-          child: _GlowOrb(240, Color(0x55FFFFFF)),
+          child: _GlowOrb(240, Color(0x66FFC20E)),
         ),
         const Positioned(
           top: 220,
           left: -80,
-          child: _GlowOrb(200, Color(0x33FFFFFF)),
+          child: _GlowOrb(200, Color(0x33242132)),
         ),
         const Positioned(
           bottom: 80,
           right: -40,
-          child: _GlowOrb(160, Color(0x44E7D4F6)),
+          child: _GlowOrb(160, Color(0x44FFC20E)),
         ),
         ?child,
       ],
@@ -492,7 +490,7 @@ class GlassPanel extends StatelessWidget {
             ),
             boxShadow: [
               BoxShadow(
-                color: BrandColors.purple.withValues(alpha: dark ? .28 : .12),
+                color: const Color(0x14242132),
                 blurRadius: 24,
                 offset: const Offset(0, 12),
               ),
@@ -641,21 +639,23 @@ class NeuIconButton extends StatelessWidget {
   });
   @override
   Widget build(BuildContext context) {
-    final dark = Theme.of(context).brightness == Brightness.dark;
     return AnimatedOpacity(
       opacity: onPressed == null ? .55 : 1,
       duration: const Duration(milliseconds: 200),
       child: DecoratedBox(
         decoration: accent
-            ? brandRaised(shape: BoxShape.circle)
-            : neuRaised(dark, shape: BoxShape.circle, depth: 4),
+            ? const BoxDecoration(
+                color: Bubbler.yellow,
+                shape: BoxShape.circle,
+              )
+            : const BoxDecoration(),
         child: IconButton(
           tooltip: tooltip,
           onPressed: onPressed,
           icon: Icon(icon, size: 21),
           style: IconButton.styleFrom(
             foregroundColor: accent
-                ? Colors.white
+                ? Bubbler.ink
                 : Theme.of(context).colorScheme.onSurface,
             disabledForegroundColor: Theme.of(context).colorScheme.onSurface,
             fixedSize: Size(size, size),
@@ -685,7 +685,7 @@ class NeuOption extends StatelessWidget {
   Widget build(BuildContext context) {
     final dark = Theme.of(context).brightness == Brightness.dark;
     final ink = selected
-        ? Colors.white
+        ? Bubbler.ink
         : Theme.of(context).colorScheme.onSurface;
     return Semantics(
       button: true,
@@ -697,8 +697,17 @@ class NeuOption extends StatelessWidget {
           duration: const Duration(milliseconds: 220),
           curve: Curves.easeOutCubic,
           decoration: selected
-              ? brandRaised(radius: radius)
-              : neuRaised(dark, radius: radius, depth: 4),
+              ? BoxDecoration(
+                  color: Bubbler.yellow,
+                  borderRadius: BorderRadius.circular(radius),
+                )
+              : BoxDecoration(
+                  color: dark ? Bubbler.cardDark : Colors.white,
+                  borderRadius: BorderRadius.circular(radius),
+                  border: Border.all(
+                    color: dark ? const Color(0x14FFFFFF) : Bubbler.line,
+                  ),
+                ),
           child: Material(
             color: Colors.transparent,
             shape: RoundedRectangleBorder(

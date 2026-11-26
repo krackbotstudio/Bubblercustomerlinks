@@ -72,7 +72,7 @@ class PickupDraft {
     }
     final today = DateTime(now.year, now.month, now.day);
     final day = DateTime(date.year, date.month, date.day);
-    if (!day.isAfter(today)) return 'Choose a pickup date after today.';
+    if (day.isBefore(today)) return 'Choose a pickup date from today.';
     if (!sampleWindows.contains(window)) return 'Choose a pickup window.';
     return null;
   }

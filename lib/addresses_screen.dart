@@ -121,7 +121,7 @@ class _AddressesScreenState extends State<AddressesScreen> {
       style: TextStyle(
         fontSize: 11,
         fontWeight: FontWeight.w700,
-        color: accent ? Colors.white : mutedText(context),
+        color: accent ? Bubbler.ink : mutedText(context),
       ),
     ),
   );

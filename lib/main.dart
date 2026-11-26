@@ -6,13 +6,12 @@ import 'appearance.dart';
 import 'auth.dart';
 import 'catalog.dart';
 import 'customer_api.dart';
+import 'booking_journey.dart';
 import 'booking_screen.dart';
 import 'brand_api.dart';
 import 'domain.dart';
 import 'login_screen.dart';
 import 'prices_screen.dart';
-import 'pickup_schedule.dart';
-import 'service_sphere.dart';
 import 'account_data.dart';
 import 'account_widgets.dart';
 import 'addresses_screen.dart';
@@ -121,6 +120,7 @@ class _CustomerShellState extends State<CustomerShell> {
   final client = http.Client();
   DateTime? pickupDate;
   String? pickupWindow;
+  final Map<String, int> basket = {};
   late final CustomerAuth auth;
   late final SessionStore sessionStore;
   late final AccountApi accounts;
@@ -143,6 +143,8 @@ class _CustomerShellState extends State<CustomerShell> {
     super.initState();
     showBrandSelector = !hasExplicitBrandInUrl();
     login = widget.startAtLogin;
+    final now = DateTime.now();
+    pickupDate = DateTime(now.year, now.month, now.day);
     auth = widget.auth ?? AuthApi(CustomerApi(client));
     sessionStore = widget.sessionStore ?? platformSessionStore();
     accounts = widget.accountApi ?? AccountApi(CustomerApi(client));
@@ -290,8 +292,10 @@ class _CustomerShellState extends State<CustomerShell> {
       session = null;
       login = true;
       tab = 0;
-      pickupDate = null;
+      final today = DateTime.now();
+      pickupDate = DateTime(today.year, today.month, today.day);
       pickupWindow = null;
+      basket.clear();
       addresses = [];
       selectedAddress = null;
       activeOrderCount = 0;
@@ -344,11 +348,14 @@ class _CustomerShellState extends State<CustomerShell> {
     login = false;
   });
 
+  bool get _basketHasItems => basket.values.any((count) => count > 0);
+
   Future<void> openBooking() async {
-    if (pickupDate == null || pickupWindow == null) return;
-    if (!pickupDate!.isAfter(DateUtils.dateOnly(DateTime.now()))) {
+    if (pickupDate == null || pickupWindow == null || !_basketHasItems) return;
+    final today = DateUtils.dateOnly(DateTime.now());
+    if (DateUtils.dateOnly(pickupDate!).isBefore(today)) {
       setState(() {
-        pickupDate = null;
+        pickupDate = today;
         pickupWindow = null;
       });
       return;
@@ -427,8 +434,10 @@ class _CustomerShellState extends State<CustomerShell> {
       loadActiveOrders();
       setState(() {
         tab = 2;
-        pickupDate = null;
+        final today = DateTime.now();
+        pickupDate = DateTime(today.year, today.month, today.day);
         pickupWindow = null;
+        basket.clear();
       });
     }
   }
@@ -582,118 +591,113 @@ class _CustomerShellState extends State<CustomerShell> {
                       },
                     )
                   : Column(
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(20, 16, 18, 12),
-                        child: Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(6),
-                              decoration: neuRaised(
-                                widget.dark,
-                                radius: 16,
-                                depth: 4,
-                              ),
-                              child: ClipRRect(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(20, 16, 18, 12),
+                          child: Row(
+                            children: [
+                              ClipRRect(
                                 borderRadius: BorderRadius.circular(10),
-                                child: () {
-                                  final logo = brand?.logoUrl ??
-                                      AppConfig.brandLogoUrl;
-                                  if (logo != null && logo.isNotEmpty) {
-                                    return Image.network(
-                                      logo,
-                                      width: 34,
-                                      height: 34,
-                                      fit: BoxFit.contain,
-                                      errorBuilder: (_, __, ___) =>
-                                          Image.asset(
-                                        BrandColors.logo,
+                                  child: () {
+                                    final logo =
+                                        brand?.logoUrl ??
+                                        AppConfig.brandLogoUrl;
+                                    if (logo != null && logo.isNotEmpty) {
+                                      return Image.network(
+                                        logo,
                                         width: 34,
                                         height: 34,
                                         fit: BoxFit.contain,
-                                      ),
+                                        errorBuilder: (_, __, ___) =>
+                                            Image.asset(
+                                              BrandColors.logo,
+                                              width: 34,
+                                              height: 34,
+                                              fit: BoxFit.contain,
+                                            ),
+                                      );
+                                    }
+                                    return Image.asset(
+                                      BrandColors.logo,
+                                      width: 34,
+                                      height: 34,
+                                      fit: BoxFit.contain,
                                     );
-                                  }
-                                  return Image.asset(
-                                    BrandColors.logo,
-                                    width: 34,
-                                    height: 34,
-                                    fit: BoxFit.contain,
-                                  );
-                                }(),
+                                  }(),
                               ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    session?.customer.name?.trim().isNotEmpty ==
-                                            true
-                                        ? 'Hello ${session!.customer.name!.trim()}'
-                                        : 'Hello',
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .headlineSmall
-                                        ?.copyWith(fontSize: 22),
-                                  ),
-                                  Text(
-                                    brand?.name ?? AppConfig.brandName,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: mutedText(context),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      session?.customer.name
+                                                  ?.trim()
+                                                  .isNotEmpty ==
+                                              true
+                                          ? 'Hello ${session!.customer.name!.trim()}'
+                                          : 'Hello',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .headlineSmall
+                                          ?.copyWith(fontSize: 22),
                                     ),
-                                  ),
-                                ],
+                                    Text(
+                                      brand?.name ?? AppConfig.brandName,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: mutedText(context),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ),
-                            NeuIconButton(
-                              icon: widget.dark
-                                  ? Icons.light_mode
-                                  : Icons.dark_mode,
-                              tooltip: 'Toggle Dark/Light Mode',
-                              onPressed: widget.toggleTheme,
-                              accent: true,
-                            ),
-                            const SizedBox(width: 10),
-                            NeuIconButton(
-                              icon: Icons.notifications_none,
-                              tooltip: 'Notifications',
-                              onPressed: showNotificationsSheet,
-                            ),
-                          ],
-                        ),
-                      ),
-                      Expanded(
-                        child: switch (tab) {
-                          0 => home(),
-                          1 => PricesScreen(
-                            branches: brand?.branches ?? const [],
-                            refreshBranches: refreshBrand,
-                            loadCatalogue:
-                                widget.loadCatalogue ??
-                                (id) => CatalogApi(
-                                  CustomerApi(client),
-                                ).load(id, brand?.branches ?? const []),
+                              NeuIconButton(
+                                icon: widget.dark
+                                    ? Icons.light_mode
+                                    : Icons.dark_mode,
+                                tooltip: 'Toggle Dark/Light Mode',
+                                onPressed: widget.toggleTheme,
+                                accent: true,
+                              ),
+                              const SizedBox(width: 10),
+                              NeuIconButton(
+                                icon: Icons.notifications_none,
+                                tooltip: 'Notifications',
+                                onPressed: showNotificationsSheet,
+                              ),
+                            ],
                           ),
-                          2 => orders(),
-                          _ => profile(),
-                        },
-                      ),
-                      navigation(),
-                    ],
-                  ),
+                        ),
+                        Expanded(
+                          child: switch (tab) {
+                            0 => home(),
+                            1 => PricesScreen(
+                              branches: brand?.branches ?? const [],
+                              refreshBranches: refreshBrand,
+                              loadCatalogue:
+                                  widget.loadCatalogue ??
+                                  (id) => CatalogApi(
+                                    CustomerApi(client),
+                                  ).load(id, brand?.branches ?? const []),
+                            ),
+                            2 => orders(),
+                            _ => profile(),
+                          },
+                        ),
+                        navigation(),
+                      ],
+                    ),
+            ),
           ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Widget navigation() {
     final fg = Theme.of(context).colorScheme.onSurface;
@@ -707,7 +711,13 @@ class _CustomerShellState extends State<CustomerShell> {
       child: Container(
         height: 66,
         padding: const EdgeInsets.symmetric(horizontal: 6),
-        decoration: neuRaised(widget.dark, radius: 26, depth: 7),
+        decoration: BoxDecoration(
+          color: widget.dark ? Bubbler.cardDark : Colors.white,
+          borderRadius: BorderRadius.circular(28),
+          border: Border.all(
+            color: widget.dark ? const Color(0x14FFFFFF) : Bubbler.line,
+          ),
+        ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
@@ -747,17 +757,6 @@ class _CustomerShellState extends State<CustomerShell> {
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(18),
                         gradient: tab == item.$1 ? brandGradient : null,
-                        boxShadow: tab == item.$1
-                            ? [
-                                BoxShadow(
-                                  color: BrandColors.purple.withValues(
-                                    alpha: .38,
-                                  ),
-                                  blurRadius: 16,
-                                  offset: const Offset(0, 6),
-                                ),
-                              ]
-                            : null,
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -766,7 +765,7 @@ class _CustomerShellState extends State<CustomerShell> {
                             tab == item.$1 ? item.$2 : item.$3,
                             size: 22,
                             color: tab == item.$1
-                                ? Colors.white
+                                ? Bubbler.ink
                                 : fg.withValues(alpha: .5),
                           ),
                           if (tab == item.$1) ...[
@@ -778,9 +777,9 @@ class _CustomerShellState extends State<CustomerShell> {
                                 softWrap: false,
                                 overflow: TextOverflow.fade,
                                 style: const TextStyle(
-                                  color: Colors.white,
+                                  color: Bubbler.ink,
                                   fontSize: 14,
-                                  fontWeight: FontWeight.w600,
+                                  fontWeight: FontWeight.w700,
                                 ),
                               ),
                             ),
@@ -806,21 +805,19 @@ class _CustomerShellState extends State<CustomerShell> {
     child: ListView(
       physics: const AlwaysScrollableScrollPhysics(),
       children: [
-        AspectRatio(
-          aspectRatio: 1 / .7,
-          child: ServiceSphere(banners: banners),
-        ),
         if (session != null && activeOrderCount > 0) activeOrdersBanner(),
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 10),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              addressSection(),
-              const SizedBox(height: 18),
-              PickupSchedule(
+              BookingJourney(
                 date: pickupDate,
                 window: pickupWindow,
+                savedPlace: selectedAddress == null
+                    ? null
+                    : '${selectedAddress!.text('addressLine')}, ${selectedAddress!.text('pincode')}',
+                basket: basket,
                 onDateChanged: (value) => setState(() {
                   if (!DateUtils.isSameDay(pickupDate, value)) {
                     pickupWindow = null;
@@ -829,7 +826,20 @@ class _CustomerShellState extends State<CustomerShell> {
                 }),
                 onWindowChanged: (value) =>
                     setState(() => pickupWindow = value),
+                onDropItem: (id) => setState(() {
+                  basket[id] = (basket[id] ?? 0) + 1;
+                }),
+                onRemoveItem: (id) => setState(() {
+                  final next = (basket[id] ?? 0) - 1;
+                  if (next <= 0) {
+                    basket.remove(id);
+                  } else {
+                    basket[id] = next;
+                  }
+                }),
                 onContinue: openBooking,
+                onOpenRates: () => navigate(1),
+                onLocationTap: session == null ? signIn : showAddressSelector,
               ),
               if (failed) ...[
                 const SizedBox(height: 14),
@@ -887,7 +897,7 @@ class _CustomerShellState extends State<CustomerShell> {
                           child: Text(
                             '$activeOrderCount',
                             style: const TextStyle(
-                              color: Colors.white,
+                              color: Bubbler.ink,
                               fontSize: 10,
                               fontWeight: FontWeight.w800,
                             ),
@@ -933,7 +943,7 @@ class _CustomerShellState extends State<CustomerShell> {
                         Text(
                           'View',
                           style: TextStyle(
-                            color: Colors.white,
+                            color: Bubbler.ink,
                             fontWeight: FontWeight.w700,
                             fontSize: 13,
                           ),
@@ -942,7 +952,7 @@ class _CustomerShellState extends State<CustomerShell> {
                         Icon(
                           Icons.arrow_forward_rounded,
                           size: 16,
-                          color: Colors.white,
+                          color: Bubbler.ink,
                         ),
                       ],
                     ),
@@ -1111,7 +1121,7 @@ class _CustomerShellState extends State<CustomerShell> {
                               style: TextStyle(
                                 fontSize: 9,
                                 fontWeight: FontWeight.w800,
-                                color: Colors.white,
+                                color: Bubbler.ink,
                                 letterSpacing: .5,
                               ),
                             ),

@@ -10,10 +10,10 @@ void main() {
     window: sampleWindows.first,
     date: date ?? DateTime(2026, 11, 6),
   );
-  test('rejects malformed postal codes and past or same-day pickup dates', () {
+  test('rejects malformed postal codes and past pickup dates', () {
     expect(pickup(postal: '000000').validate(now), isNotNull);
     expect(pickup(postal: 'abcdef').validate(now), isNotNull);
-    expect(pickup(date: now).validate(now), isNotNull);
+    expect(pickup(date: now).validate(now), isNull);
     expect(pickup(date: DateTime(2026, 11, 4)).validate(now), isNotNull);
     expect(pickup().validate(now), isNull);
   });

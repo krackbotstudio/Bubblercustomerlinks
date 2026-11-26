@@ -88,7 +88,7 @@ class PickupSchedule extends StatelessWidget {
               final day = days[index];
               final active = DateUtils.isSameDay(day, selectedDate);
               final ink = active
-                  ? Colors.white
+                  ? Bubbler.ink
                   : Theme.of(context).colorScheme.onSurface;
               return Semantics(
                 button: true,

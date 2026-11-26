@@ -111,12 +111,12 @@ class _ServiceSphereState extends State<ServiceSphere>
                 decoration: BoxDecoration(
                   color: dark
                       ? const Color(0x18FFFFFF)
-                      : const Color(0xFFF3E7FB),
+                      : const Color(0xFFFFF4DC),
                   border: Border.symmetric(
                     horizontal: BorderSide(
                       color: dark
                           ? Colors.white.withValues(alpha: 0.08)
-                          : const Color(0xFFE4D4F2),
+                          : Bubbler.line,
                       width: 1,
                     ),
                   ),
@@ -223,19 +223,19 @@ final _fallbackSlides = [
     'Doorstep pickup & delivery',
     'Schedule a pickup in a few taps',
     BrandArt.pickup,
-    [Color(0xFF8B5CF6), BrandColors.purple],
+    [Color(0xFF3A3458), Bubbler.navy],
   ),
   _Slide(
     'Dry cleaning, done right',
     'Expert care for delicate fabrics',
     BrandArt.dryClean,
-    [Color(0xFF6D28D9), BrandColors.purpleDeep],
+    [Bubbler.navy, Bubbler.ink],
   ),
   _Slide(
     'Crisp steam ironing',
     'Wrinkle-free clothes, every time',
     BrandArt.steamIron,
-    [Color(0xFFA855F7), Color(0xFF6B21A8)],
+    [Color(0xFF2A2740), Bubbler.navy],
   ),
 ];
 
@@ -394,13 +394,13 @@ class _BannerCarouselState extends State<_BannerCarousel> {
                               vertical: 4,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: .18),
+                              color: Bubbler.yellow,
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: const Text(
                               'VCLEAN',
                               style: TextStyle(
-                                color: Colors.white,
+                                color: Bubbler.ink,
                                 fontSize: 10,
                                 fontWeight: FontWeight.w700,
                                 letterSpacing: 1.6,

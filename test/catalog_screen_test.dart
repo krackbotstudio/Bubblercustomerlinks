@@ -98,4 +98,53 @@ void main() {
     );
     expect(find.byType(PriceFlipCard), findsNothing);
   });
+  testWidgets('price categories show the matching segment', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: PricesScreen(
+            branches: branches,
+            loadCatalogue: (_) async => const [
+              CatalogItem(
+                id: 'shirt',
+                name: 'Shirt',
+                prices: [CatalogPrice('Men', 'Wash & Iron', 4500)],
+              ),
+              CatalogItem(
+                id: 'saree',
+                name: 'Saree (cotton)',
+                prices: [CatalogPrice('Women', 'Dry Cleaning', 22000)],
+              ),
+              CatalogItem(
+                id: 'uniform',
+                name: 'School uniform',
+                prices: [CatalogPrice('Kids', 'Wash & Iron', 4500)],
+              ),
+              CatalogItem(
+                id: 'towel',
+                name: 'Towel',
+                prices: [CatalogPrice('Home Linen', 'Wash & Fold', 2500)],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Shirt'), findsOneWidget);
+    expect(find.text('Saree (cotton)'), findsNothing);
+    expect(find.text('Towel'), findsNothing);
+    await tester.tap(find.byKey(const Key('price-wear-women')));
+    await tester.pumpAndSettle();
+    expect(find.text('Saree (cotton)'), findsOneWidget);
+    expect(find.text('Shirt'), findsNothing);
+    await tester.tap(find.byKey(const Key('price-wear-kids')));
+    await tester.pumpAndSettle();
+    expect(find.text('School uniform'), findsOneWidget);
+    expect(find.text('Saree (cotton)'), findsNothing);
+    await tester.tap(find.byKey(const Key('price-wear-household')));
+    await tester.pumpAndSettle();
+    expect(find.text('Towel'), findsOneWidget);
+    expect(find.text('School uniform'), findsNothing);
+  });
 }

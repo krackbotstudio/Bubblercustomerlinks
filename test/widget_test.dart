@@ -127,7 +127,7 @@ void main() {
       isNull,
     );
     expect(find.byKey(const Key('service-daily')), findsNothing);
-    expect(find.text('Select pickup date'), findsOneWidget);
+    expect(find.text('Check our rate card'), findsOneWidget);
     await tester.tap(find.byTooltip('Toggle Dark/Light Mode'));
     await tester.pumpAndSettle();
     expect(
@@ -203,6 +203,9 @@ void main() {
       await reveal(tester, find.byKey(const Key('pickup-window-1')));
       await tester.tap(find.byKey(const Key('pickup-window-1')));
       await tester.pumpAndSettle();
+      await reveal(tester, find.byKey(const Key('laundry-shirt')));
+      await tester.tap(find.byKey(const Key('laundry-shirt')));
+      await tester.pumpAndSettle();
       await navigate(tester, 1);
       await navigate(tester, 0);
       expect(
@@ -224,7 +227,7 @@ void main() {
       await tester.tap(find.byKey(const Key('pickup-window-1')));
       await tester.pumpAndSettle();
       final now = DateTime.now();
-      final chosenDate = DateTime(now.year, now.month, now.day + 2);
+      final chosenDate = DateTime(now.year, now.month, now.day + 1);
       await reveal(tester, find.byKey(const Key('home-continue')));
       await tester.tap(find.byKey(const Key('home-continue')));
       await tester.pumpAndSettle();
@@ -253,8 +256,11 @@ void main() {
         findsOneWidget,
       );
       expect(find.text('12 PM – 3 PM').last, findsOneWidget);
-      await reveal(tester, find.text('Schedule pickup'));
-      await tester.tap(find.text('Schedule pickup'));
+      final schedule = find
+          .widgetWithText(FilledButton, 'Schedule pickup')
+          .last;
+      await reveal(tester, schedule);
+      await tester.tap(schedule);
       await tester.pumpAndSettle();
       expect(find.byType(BottomSheet), findsNothing);
       await navigate(tester, 0);
@@ -279,6 +285,9 @@ void main() {
       await reveal(tester, find.byKey(const Key('pickup-window-1')));
       await tester.tap(find.byKey(const Key('pickup-window-1')));
       await tester.pumpAndSettle();
+      await reveal(tester, find.byKey(const Key('laundry-shirt')));
+      await tester.tap(find.byKey(const Key('laundry-shirt')));
+      await tester.pumpAndSettle();
       await reveal(tester, find.byKey(const Key('home-continue')));
       await tester.tap(find.byKey(const Key('home-continue')));
       await tester.pumpAndSettle();
@@ -293,6 +302,50 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
+
+  testWidgets('laundry pieces can be added, reduced, and removed', (
+    tester,
+  ) async {
+    await start(tester, width: 390);
+    await navigate(tester, 0);
+    await reveal(tester, find.byKey(const Key('laundry-shirt')));
+    await tester.tap(find.byKey(const Key('laundry-shirt')));
+    await tester.pumpAndSettle();
+    expect(find.text('Laundry total  ₹40'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('laundry-shirt')));
+    await tester.pumpAndSettle();
+    expect(find.text('Laundry total  ₹80'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('laundry-less-shirt')));
+    await tester.pumpAndSettle();
+    expect(find.text('Laundry total  ₹40'), findsOneWidget);
+    await reveal(tester, find.byKey(const Key('laundry-tshirt')));
+    await tester.tap(find.byKey(const Key('laundry-tshirt')));
+    await tester.pumpAndSettle();
+    expect(find.text('Laundry total  ₹70'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('laundry-less-tshirt')));
+    await tester.pumpAndSettle();
+    expect(find.text('Laundry total  ₹40'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('laundry-less-shirt')));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Laundry total'), findsNothing);
+    expect(find.text('Saree'), findsNothing);
+    expect(find.text('Towel'), findsNothing);
+    await reveal(tester, find.byKey(const Key('wear-women')));
+    await tester.tap(find.byKey(const Key('wear-women')));
+    await tester.pumpAndSettle();
+    expect(find.text('Saree'), findsOneWidget);
+    expect(find.text('Hoodie'), findsNothing);
+    await tester.tap(find.byKey(const Key('wear-kids')));
+    await tester.pumpAndSettle();
+    expect(find.text('Dress'), findsOneWidget);
+    expect(find.text('Saree'), findsNothing);
+    await tester.tap(find.byKey(const Key('wear-household')));
+    await tester.pumpAndSettle();
+    expect(find.text('Towel'), findsOneWidget);
+    expect(find.text('Bedsheet'), findsOneWidget);
+    expect(find.text('Dress'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
 
   testWidgets('prices search and flip both directions at 320 pixel width', (
     tester,
